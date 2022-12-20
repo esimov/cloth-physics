@@ -55,26 +55,26 @@ func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 	paint.PaintOp{}.Add(gtx.Ops)
 }
 
-// force = acceleration * mass ->
-// acceleration = force / mass
-// velocity = acceleration * deltaTime
-// position = velocity * deltaTime
 func (p *Particle) update(gtx layout.Context, dt float64) {
 	if p.pinX {
 		return
 	}
 	force := struct{ x, y float64 }{x: 0.0, y: 0.02}
 
-	// Newton's law of motion.
+	// Newton's law of motion: force = acceleration * mass
+	// acceleration = force / mass
 	ax := force.x / p.mass
 	ay := force.y / p.mass
 
 	px, py := p.x, p.y
+	// velocity = acceleration * deltaTime
+	// position = velocity * deltaTime
+	posX, posY := ax*(dt*dt), ay*(dt*dt)
 
 	// Verlet integration:
 	// x(t+Δt)=2x(t)−x(t−Δt)+a(t)Δt2
-	p.x = p.x + (p.x-p.px)*p.friction + ax*(dt*dt)
-	p.y = p.y + (p.y-p.py)*p.friction + ay*(dt*dt)
+	p.x = p.x + (p.x-p.px)*p.friction + posX
+	p.y = p.y + (p.y-p.py)*p.friction + posY
 
 	p.px, p.py = px, py
 

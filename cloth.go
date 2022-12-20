@@ -16,6 +16,8 @@ type Cloth struct {
 	springs   []*Spring
 	partCol   color.NRGBA
 	springCol color.NRGBA
+
+	isInitialized bool
 }
 
 func NewCloth(width, height, spacing int, mass, friction float64, col1, col2 color.NRGBA) *Cloth {
@@ -63,6 +65,7 @@ func (c *Cloth) Init(startX, startY int) {
 			c.particles = append(c.particles, particle)
 		}
 	}
+	c.isInitialized = true
 }
 
 func (c *Cloth) Update(gtx layout.Context, delta float64) {

@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	windowWidth  = 800
-	windowHeight = 520
+	windowWidth  = 820
+	windowHeight = 540
 )
 
 func main() {
@@ -45,32 +45,9 @@ func loop(w *app.Window) error {
 	partCol := color.NRGBA{R: 0x0, G: 0x0, B: 0x0, A: 0xff}
 	springCol := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 
-	// p1 := NewParticle(220, 20, 20, partCol)
-	// p2 := NewParticle(320, 20, 20, partCol)
-	// p3 := NewParticle(220, 120, 20, partCol)
-	// p4 := NewParticle(320, 120, 20, partCol)
-	// particles := []*Particle{p1, p2, p3, p4}
-
-	// st1 := NewSpring(p1, p2, getDistance(p1, p3), springCol)
-	// st2 := NewSpring(p2, p4, getDistance(p1, p2), springCol)
-	// st3 := NewSpring(p4, p3, getDistance(p2, p4), springCol)
-	// st4 := NewSpring(p3, p1, getDistance(p4, p3), springCol)
-	// sticks := []*Spring{st1, st2, st3, st4}
-
-	var width, height int = windowWidth, windowHeight * 0.5
-
-	cloth := NewCloth(width, height, 15, 2, 0.995, partCol, springCol)
-	startX := (width/2 - (width/cloth.spacing)/2) / 2
-
-	//renderer->GetWindowWidth() * 0.5f - clothWidth * clothSpacing * 0.5f
-
-	fmt.Println(width)
-	fmt.Println(float64(cloth.spacing) / float64(width))
-	fmt.Println(width/2 - (width/cloth.spacing)/2)
-	fmt.Println("StartX:", startX/2)
-	startY := int(float64(height) * 0.2)
-
-	cloth.Init(startX, startY)
+	var clothW int = windowWidth * 0.9
+	var clothH int = windowHeight * 0.45
+	cloth := NewCloth(clothW, clothH, 15, 2, 0.995, partCol, springCol)
 
 	initTime := time.Now()
 	mouse := &Mouse{}
@@ -84,6 +61,14 @@ func loop(w *app.Window) error {
 				return e.Err
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
+				if !cloth.isInitialized {
+					width := gtx.Constraints.Max.X
+					height := gtx.Constraints.Max.Y
+
+					startX := width/2 - clothW/2
+					startY := int(float64(height) * 0.2)
+					cloth.Init(startX, startY)
+				}
 
 				pointer.InputOp{
 					Tag:   w,
@@ -115,9 +100,7 @@ func loop(w *app.Window) error {
 						switch ev.Buttons {
 						case pointer.ButtonPrimary:
 							mouse.setLeftMousePress()
-							fmt.Println("primary")
 							pos := mouse.getCurrentPosition(ev)
-							fmt.Println(gtx.Constraints.Max.X, gtx.Constraints.Max.Y)
 							fmt.Println(pos.X, pos.Y)
 						case pointer.ButtonSecondary:
 							mouse.setRightMousePress()
@@ -127,14 +110,6 @@ func loop(w *app.Window) error {
 				}
 
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
-				// for _, p := range particles {
-				// 	p.draw(gtx, float32(p.x), float32(p.y), float32(p.mass))
-				// 	p.update(gtx, deltaTime)
-				// }
-
-				// for _, s := range sticks {
-				// 	s.Update(gtx)
-				// }
 
 				currentTime := time.Now()
 				deltaTime = currentTime.Sub(initTime).Milliseconds()
