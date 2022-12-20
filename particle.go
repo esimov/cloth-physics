@@ -6,50 +6,33 @@ import (
 
 	"gioui.org/f32"
 	"gioui.org/layout"
-	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 )
 
 type Particle struct {
-	x, y   float64
-	px, py float64
-	vx, vy float64
-	mass   float64
+	x, y     float64
+	px, py   float64
+	vx, vy   float64
+	mass     float64
+	friction float64
+	pinX     bool
+	color    color.NRGBA
 }
 
-type Stick struct {
-	p1, p2 *Particle
-	length float64
-}
-
-type mouse struct {
-	x, y      float64
-	px, py    float64
-	isDown    bool
-	threshold float64
-}
-
-func NewParticle(x, y, mass float64) *Particle {
+func NewParticle(x, y, mass float64, col color.NRGBA) *Particle {
 	p := &Particle{
-		x, y, x, y, 0, 0, mass,
+		x: x, y: y, px: x, py: y, vx: 0, vy: 0, mass: mass, color: col,
 	}
 	return p
 }
 
-func NewStick(p1, p2 *Particle, length float64) *Stick {
-	return &Stick{
-		p1, p2, length,
-	}
+func (p *Particle) Update(gtx layout.Context, delta float64) {
+	p.draw(gtx, float32(p.x), float32(p.y), float32(p.mass))
+	p.update(gtx, delta)
 }
 
-func (p *Particle) Update(gtx layout.Context) {
-	col := color.NRGBA{R: 0, G: 0, B: 0, A: 0xff}
-	p.draw(gtx, float32(p.x), float32(p.y), float32(p.mass), col)
-	p.update(gtx)
-}
-
-func (p *Particle) draw(gtx layout.Context, x, y, r float32, col color.NRGBA) {
+func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 	var (
 		sq   float64
 		p1   f32.Point
@@ -68,7 +51,7 @@ func (p *Particle) draw(gtx layout.Context, x, y, r float32, col color.NRGBA) {
 	path.Close()
 
 	defer clip.Outline{Path: path.End()}.Op().Push(gtx.Ops).Pop()
-	paint.ColorOp{Color: col}.Add(gtx.Ops)
+	paint.ColorOp{Color: p.color}.Add(gtx.Ops)
 	paint.PaintOp{}.Add(gtx.Ops)
 }
 
@@ -76,9 +59,13 @@ func (p *Particle) draw(gtx layout.Context, x, y, r float32, col color.NRGBA) {
 // acceleration = force / mass
 // velocity = acceleration * deltaTime
 // position = velocity * deltaTime
-func (p *Particle) update(gtx layout.Context) {
-	dt := 1.5
-	force := struct{ x, y float64 }{x: 0.0, y: 0.5}
+func (p *Particle) update(gtx layout.Context, dt float64) {
+	if p.pinX {
+		return
+	}
+	force := struct{ x, y float64 }{x: 0.0, y: 0.02}
+
+	// Newton's law of motion.
 	ax := force.x / p.mass
 	ay := force.y / p.mass
 
@@ -86,67 +73,30 @@ func (p *Particle) update(gtx layout.Context) {
 
 	// Verlet integration:
 	// x(t+Δt)=2x(t)−x(t−Δt)+a(t)Δt2
-	p.x = 2*p.x - p.px + ax*(dt*dt)
-	p.y = 2*p.y - p.py + ay*(dt*dt)
+	p.x = p.x + (p.x-p.px)*p.friction + ax*(dt*dt)
+	p.y = p.y + (p.y-p.py)*p.friction + ay*(dt*dt)
 
-	p.px = px
-	p.py = py
+	p.px, p.py = px, py
 
 	width, height := gtx.Constraints.Max.X, gtx.Constraints.Max.Y
-	if p.x > float64(width)-p.mass {
+
+	if p.x >= float64(width)-p.mass {
 		p.x = float64(width) - p.mass
+		p.px = p.x
 	} else if p.x < 0 {
 		p.x = p.mass / 2
+		p.px = p.x
 	}
 
 	if p.y > float64(height)-p.mass {
 		p.y = float64(height) - p.mass
+		p.py = p.y
 	} else if p.y < 0 {
 		p.y = p.mass / 2
+		p.py = p.y
 	}
 }
 
-func (s *Stick) Update(gtx layout.Context) {
-	col := color.NRGBA{R: 0, G: 0, B: 0, A: 0xff}
-	s.draw(gtx, s.p1, s.p2, col)
-	s.update(s.p1, s.p2)
-}
-
-func (s *Stick) draw(gtx layout.Context, p1, p2 *Particle, col color.NRGBA) {
-	var path clip.Path
-
-	drawLine := func(ops *op.Ops) clip.PathSpec {
-		path.Begin(gtx.Ops)
-		path.MoveTo(f32.Pt(float32(p1.x), float32(p1.y)))
-		path.LineTo(f32.Pt(float32(p2.x), float32(p2.y)))
-		path.Close()
-
-		return path.End()
-	}
-
-	paint.FillShape(gtx.Ops, col, clip.Stroke{
-		Path:  drawLine(gtx.Ops),
-		Width: gtx.Metric.PxPerDp,
-	}.Op())
-}
-
-func (s *Stick) update(p1, p2 *Particle) {
-	dx := p1.x - p2.x
-	dy := p1.y - p2.y
-
-	dist := math.Sqrt(dx*dx + dy*dy)
-	df := (s.length - dist) / dist * 0.1
-	offsetX, offsetY := dx*df, dy*df
-
-	p1.x += offsetX
-	p1.y += offsetY
-	p2.x -= offsetX
-	p2.y -= offsetY
-}
-
-func getDistance(p1, p2 *Particle) float64 {
-	dx := p2.x - p1.x
-	dy := p2.y - p1.y
-
-	return math.Sqrt(dx*dx + dy*dy)
+func (p *Particle) increaseFriction(force float64) {
+	p.friction += force
 }
