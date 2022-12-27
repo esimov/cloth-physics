@@ -45,9 +45,9 @@ func loop(w *app.Window) error {
 	partCol := color.NRGBA{R: 0x0, G: 0x0, B: 0x0, A: 0xff}
 	springCol := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 
-	var clothW int = windowWidth * 0.9
-	var clothH int = windowHeight * 0.45
-	cloth := NewCloth(clothW, clothH, 15, 2, 0.995, partCol, springCol)
+	var clothW int = windowWidth
+	var clothH int = windowHeight * 0.4
+	cloth := NewCloth(clothW, clothH, 12, 2, 0.99, partCol, springCol)
 
 	initTime := time.Now()
 	mouse := &Mouse{}
@@ -99,11 +99,12 @@ func loop(w *app.Window) error {
 						}
 						switch ev.Buttons {
 						case pointer.ButtonPrimary:
-							mouse.setLeftMousePress()
+							mouse.setLeftMouseButton()
 							pos := mouse.getCurrentPosition(ev)
+							mouse.updatePosition(pos.X, pos.Y)
 							fmt.Println(pos.X, pos.Y)
 						case pointer.ButtonSecondary:
-							mouse.setRightMousePress()
+							mouse.setRightMouseButton()
 							fmt.Println("secondary")
 						}
 					}

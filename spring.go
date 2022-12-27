@@ -31,22 +31,26 @@ func (s *Spring) Update(gtx layout.Context) {
 func (s *Spring) draw(gtx layout.Context, p1, p2 *Particle) {
 	var path clip.Path
 
-	drawLine := func(ops *op.Ops) clip.PathSpec {
+	drawSticks := func(ops *op.Ops) clip.PathSpec {
 		path.Begin(gtx.Ops)
+
 		path.MoveTo(f32.Pt(float32(p1.x), float32(p1.y)))
 		path.LineTo(f32.Pt(float32(p2.x), float32(p2.y)))
+		path.LineTo(f32.Pt(float32(p2.x+1), float32(p2.y)))
+		path.LineTo(f32.Pt(float32(p1.x+1), float32(p1.y)))
+
+		path.MoveTo(f32.Pt(float32(p1.x), float32(p1.y)))
+		path.LineTo(f32.Pt(float32(p2.x), float32(p2.y)))
+		path.LineTo(f32.Pt(float32(p2.x), float32(p2.y+1)))
+		path.LineTo(f32.Pt(float32(p1.x), float32(p1.y+1)))
 		path.Close()
 
 		return path.End()
 	}
 
-	defer clip.Stroke{
-		Path:  drawLine(gtx.Ops),
-		Width: gtx.Metric.PxPerDp,
-	}.Op().Push(gtx.Ops).Pop()
-
-	paint.ColorOp{Color: s.color}.Add(gtx.Ops)
-	paint.PaintOp{}.Add(gtx.Ops)
+	paint.FillShape(gtx.Ops, s.color, clip.Outline{
+		Path: drawSticks(gtx.Ops),
+	}.Op())
 }
 
 func (s *Spring) update(p1, p2 *Particle) {
@@ -70,11 +74,4 @@ func (s *Spring) update(p1, p2 *Particle) {
 		p2.x -= offsetX
 		p2.y -= offsetY
 	}
-}
-
-func getDistance(p1, p2 *Particle) float64 {
-	dx := p2.x - p1.x
-	dy := p2.y - p1.y
-
-	return math.Sqrt(dx*dx + dy*dy)
 }

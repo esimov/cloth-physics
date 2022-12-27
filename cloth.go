@@ -57,7 +57,7 @@ func (c *Cloth) Init(startX, startY int) {
 				c.springs = append(c.springs, s)
 			}
 
-			pin := (x + clothX) % (clothX / 4)
+			pin := (x + clothX) % (clothX / 6)
 			if y == 0 && (x == 0 || pin == 0) {
 				particle.pinX = true
 			}

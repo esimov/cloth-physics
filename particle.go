@@ -13,7 +13,6 @@ import (
 type Particle struct {
 	x, y     float64
 	px, py   float64
-	vx, vy   float64
 	mass     float64
 	friction float64
 	pinX     bool
@@ -22,13 +21,13 @@ type Particle struct {
 
 func NewParticle(x, y, mass float64, col color.NRGBA) *Particle {
 	p := &Particle{
-		x: x, y: y, px: x, py: y, vx: 0, vy: 0, mass: mass, color: col,
+		x: x, y: y, px: x, py: y, mass: mass, color: col,
 	}
 	return p
 }
 
 func (p *Particle) Update(gtx layout.Context, delta float64) {
-	p.draw(gtx, float32(p.x), float32(p.y), float32(p.mass))
+	//p.draw(gtx, float32(p.x), float32(p.y), 2)
 	p.update(gtx, delta)
 }
 
@@ -59,8 +58,7 @@ func (p *Particle) update(gtx layout.Context, dt float64) {
 	if p.pinX {
 		return
 	}
-	force := struct{ x, y float64 }{x: 0.0, y: 0.02}
-
+	force := struct{ x, y float64 }{x: 0.0, y: 0.005}
 	// Newton's law of motion: force = acceleration * mass
 	// acceleration = force / mass
 	ax := force.x / p.mass

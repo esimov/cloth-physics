@@ -24,18 +24,18 @@ func (m *Mouse) getCurrentPosition(ev pointer.Event) f32.Point {
 	return ev.Position
 }
 
-func (m *Mouse) setLeftMousePress() {
+func (m *Mouse) setLeftMouseButton() {
 	m.leftDown = !m.leftDown
 }
 
-func (m *Mouse) getLeftMousePress() bool {
+func (m *Mouse) getLeftMouseButton() bool {
 	return m.leftDown
 }
 
-func (m *Mouse) setRightMousePress() {
+func (m *Mouse) setRightMouseButton() {
 	m.rightDown = !m.rightDown
 }
 
-func (m *Mouse) getRightMousePress() bool {
+func (m *Mouse) getRightMouseButton() bool {
 	return m.rightDown
 }
