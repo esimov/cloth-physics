@@ -12,10 +12,11 @@ type Cloth struct {
 	spacing   int
 	friction  float64
 	mass      float64
-	particles []*Particle
-	springs   []*Spring
 	partCol   color.NRGBA
 	springCol color.NRGBA
+
+	particles   []*Particle
+	constraints []*Constraint
 
 	isInitialized bool
 }
@@ -48,16 +49,16 @@ func (c *Cloth) Init(startX, startY int) {
 			// We connect the particles from the second row and column onward to the particles before.
 			if y != 0 {
 				top := c.particles[x+(y-1)*(clothX+1)]
-				s := NewSpring(top, particle, float64(c.spacing), c.springCol)
-				c.springs = append(c.springs, s)
+				stick := NewConstraint(top, particle, float64(c.spacing), c.springCol)
+				c.constraints = append(c.constraints, stick)
 			}
 			if x != 0 {
 				left := c.particles[len(c.particles)-1]
-				s := NewSpring(left, particle, float64(c.spacing), c.springCol)
-				c.springs = append(c.springs, s)
+				stick := NewConstraint(left, particle, float64(c.spacing), c.springCol)
+				c.constraints = append(c.constraints, stick)
 			}
 
-			pin := (x + clothX) % (clothX / 6)
+			pin := (x + clothX) % (clothX / 8)
 			if y == 0 && (x == 0 || pin == 0) {
 				particle.pinX = true
 			}
@@ -68,12 +69,28 @@ func (c *Cloth) Init(startX, startY int) {
 	c.isInitialized = true
 }
 
-func (c *Cloth) Update(gtx layout.Context, delta float64) {
-	for _, p := range c.particles {
-		p.Update(gtx, delta)
+func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
+	for _, p := range cloth.particles {
+		p.Update(gtx, mouse, delta)
 	}
 
-	for _, s := range c.springs {
-		s.Update(gtx)
+	for _, c := range cloth.constraints {
+		if c.isActive {
+			c.Update(gtx, cloth, mouse)
+		}
 	}
+
+	for _, c := range cloth.constraints {
+		if c.isActive {
+			c.Draw(gtx)
+		}
+	}
+}
+
+func (c *Cloth) Reset(startX, startY int) {
+	c.constraints = nil
+	c.particles = nil
+	c.isInitialized = false
+
+	c.Init(startX, startY)
 }

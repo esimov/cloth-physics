@@ -6,18 +6,19 @@ import (
 )
 
 type Mouse struct {
-	px, py       float32
-	prevX, prevY float32
-	leftDown     bool
-	rightDown    bool
+	x, y       float64
+	px, py     float64
+	leftDown   bool
+	rightDown  bool
+	isDragging bool
 }
 
-func (m *Mouse) updatePosition(x, y float32) {
-	m.prevX = m.px
-	m.prevY = m.py
+func (m *Mouse) updatePosition(x, y float64) {
+	m.px = m.x
+	m.py = m.y
 
-	m.px = x
-	m.py = y
+	m.x = x
+	m.y = y
 }
 
 func (m *Mouse) getCurrentPosition(ev pointer.Event) f32.Point {
@@ -25,7 +26,11 @@ func (m *Mouse) getCurrentPosition(ev pointer.Event) f32.Point {
 }
 
 func (m *Mouse) setLeftMouseButton() {
-	m.leftDown = !m.leftDown
+	m.leftDown = true
+}
+
+func (m *Mouse) releaseLeftMouseButton() {
+	m.leftDown = false
 }
 
 func (m *Mouse) getLeftMouseButton() bool {
@@ -33,9 +38,21 @@ func (m *Mouse) getLeftMouseButton() bool {
 }
 
 func (m *Mouse) setRightMouseButton() {
-	m.rightDown = !m.rightDown
+	m.rightDown = true
+}
+
+func (m *Mouse) releaseRightMouseButton() {
+	m.rightDown = false
 }
 
 func (m *Mouse) getRightMouseButton() bool {
 	return m.rightDown
+}
+
+func (m *Mouse) setDragging(dragging bool) {
+	m.isDragging = dragging
+}
+
+func (m *Mouse) getDragging() bool {
+	return m.isDragging
 }

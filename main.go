@@ -47,11 +47,12 @@ func loop(w *app.Window) error {
 
 	var clothW int = windowWidth
 	var clothH int = windowHeight * 0.4
-	cloth := NewCloth(clothW, clothH, 12, 2, 0.99, partCol, springCol)
+	cloth := NewCloth(clothW, clothH, 11, 2, 0.98, partCol, springCol)
 
 	initTime := time.Now()
 	mouse := &Mouse{}
 	ctrlDown := false
+	isDragging := false
 
 	for {
 		select {
@@ -76,36 +77,61 @@ func loop(w *app.Window) error {
 				}.Add(gtx.Ops)
 
 				op.InvalidateOp{}.Add(gtx.Ops)
-				key.InputOp{Tag: w, Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt}.Add(gtx.Ops)
+				key.InputOp{
+					Tag:  w,
+					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace,
+				}.Add(gtx.Ops)
 
 				for _, ev := range gtx.Queue.Events(w) {
-					if e, ok := ev.(key.Event); ok && e.Name == key.NameEscape {
-						w.Perform(system.ActionClose)
+					if e, ok := ev.(key.Event); ok {
+						if e.State == key.Press {
+							if e.Name == key.NameSpace {
+								width := gtx.Constraints.Max.X
+								height := gtx.Constraints.Max.Y
+
+								startX := width/2 - clothW/2
+								startY := int(float64(height) * 0.2)
+								cloth.Reset(startX, startY)
+							}
+						}
+						if e.Name == key.NameEscape {
+							w.Perform(system.ActionClose)
+						}
 					}
 
 					switch ev := ev.(type) {
 					case pointer.Event:
 						switch ev.Type {
 						case pointer.Press:
+							fmt.Println("Press")
 							if ev.Modifiers == key.ModCtrl {
 								ctrlDown = true
 							}
 						case pointer.Release:
+							fmt.Println("Release")
+							isDragging = false
+
+							mouse.releaseLeftMouseButton()
+							mouse.releaseRightMouseButton()
+							mouse.setDragging(isDragging)
+
 							if ev.Modifiers == key.ModCtrl {
 								ctrlDown = false
 							}
 						case pointer.Drag:
+							isDragging = true
 							fmt.Println("DRAGGING: ", ctrlDown)
 						}
 						switch ev.Buttons {
 						case pointer.ButtonPrimary:
 							mouse.setLeftMouseButton()
 							pos := mouse.getCurrentPosition(ev)
-							mouse.updatePosition(pos.X, pos.Y)
-							fmt.Println(pos.X, pos.Y)
+							mouse.updatePosition(float64(pos.X), float64(pos.Y))
+							mouse.setDragging(isDragging)
 						case pointer.ButtonSecondary:
 							mouse.setRightMouseButton()
-							fmt.Println("secondary")
+							pos := mouse.getCurrentPosition(ev)
+							mouse.updatePosition(float64(pos.X), float64(pos.Y))
 						}
 					}
 				}
@@ -115,7 +141,7 @@ func loop(w *app.Window) error {
 				currentTime := time.Now()
 				deltaTime = currentTime.Sub(initTime).Milliseconds()
 
-				cloth.Update(gtx, float64(deltaTime)*0.2)
+				cloth.Update(gtx, mouse, float64(deltaTime)*0.2)
 				e.Frame(gtx.Ops)
 
 				initTime = currentTime

@@ -11,24 +11,30 @@ import (
 )
 
 type Particle struct {
-	x, y     float64
-	px, py   float64
-	mass     float64
-	friction float64
-	pinX     bool
-	color    color.NRGBA
+	x, y       float64
+	px, py     float64
+	size       float64
+	friction   float64
+	elasticity float64
+	dragForce  float64
+	pinX       bool
+	color      color.NRGBA
+	constraint *Constraint
 }
 
-func NewParticle(x, y, mass float64, col color.NRGBA) *Particle {
+func NewParticle(x, y, size float64, col color.NRGBA) *Particle {
 	p := &Particle{
-		x: x, y: y, px: x, py: y, mass: mass, color: col,
+		x: x, y: y, px: x, py: y, size: size, color: col,
 	}
+	p.elasticity = 18.0
+	p.dragForce = 1.9
+
 	return p
 }
 
-func (p *Particle) Update(gtx layout.Context, delta float64) {
+func (p *Particle) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 	//p.draw(gtx, float32(p.x), float32(p.y), 2)
-	p.update(gtx, delta)
+	p.update(gtx, mouse, delta)
 }
 
 func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
@@ -54,15 +60,48 @@ func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 	paint.PaintOp{}.Add(gtx.Ops)
 }
 
-func (p *Particle) update(gtx layout.Context, dt float64) {
+func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	if p.pinX {
 		return
 	}
+	dt *= 1.2
+
+	dx := p.x - mouse.x
+	dy := p.y - mouse.y
+	dist := math.Sqrt(dx*dx + dy*dy)
+
+	if mouse.getDragging() {
+		if dist < 80 {
+			dx := mouse.x - mouse.px
+			dy := mouse.y - mouse.py
+			if dx > p.elasticity {
+				dx = p.elasticity
+			}
+			if dy > p.elasticity {
+				dy = p.elasticity
+			}
+			if dx < -p.elasticity {
+				dx = -p.elasticity
+			}
+			if dy < -p.elasticity {
+				dy = -p.elasticity
+			}
+			p.px = p.x - dx*p.dragForce
+			p.py = p.y - dy*p.dragForce
+		}
+	}
+
+	if mouse.getRightMouseButton() {
+		if dist < 20 {
+			p.constraint.isActive = false
+		}
+	}
+
 	force := struct{ x, y float64 }{x: 0.0, y: 0.005}
 	// Newton's law of motion: force = acceleration * mass
 	// acceleration = force / mass
-	ax := force.x / p.mass
-	ay := force.y / p.mass
+	ax := force.x / p.size
+	ay := force.y / p.size
 
 	px, py := p.x, p.y
 	// velocity = acceleration * deltaTime
@@ -78,20 +117,29 @@ func (p *Particle) update(gtx layout.Context, dt float64) {
 
 	width, height := gtx.Constraints.Max.X, gtx.Constraints.Max.Y
 
-	if p.x >= float64(width)-p.mass {
-		p.x = float64(width) - p.mass
+	if p.x >= float64(width)-p.size {
+		p.x = float64(width) - p.size
 		p.px = p.x
 	} else if p.x < 0 {
-		p.x = p.mass / 2
+		p.x = p.size / 2
 		p.px = p.x
 	}
 
-	if p.y > float64(height)-p.mass {
-		p.y = float64(height) - p.mass
+	if p.y > float64(height)-p.size {
+		p.y = float64(height) - p.size
 		p.py = p.y
 	} else if p.y < 0 {
-		p.y = p.mass / 2
+		p.y = p.size / 2
 		p.py = p.y
+	}
+}
+
+func (p *Particle) removeConstraint(cloth *Cloth) {
+	for idx, c := range cloth.constraints {
+		if c == p.constraint {
+			cloth.constraints = append(cloth.constraints[:idx], cloth.constraints[idx+1:]...)
+			break
+		}
 	}
 }
 
