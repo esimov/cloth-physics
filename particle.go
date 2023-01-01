@@ -10,6 +10,13 @@ import (
 	"gioui.org/op/paint"
 )
 
+const (
+	clothTearDist      = 80
+	clothMouseTearDist = 15
+	clothHighlightDist = 60
+	clothPinDist       = 8
+)
+
 type Particle struct {
 	x, y       float64
 	px, py     float64
@@ -70,35 +77,39 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	dy := p.y - mouse.y
 	dist := math.Sqrt(dx*dx + dy*dy)
 
-	if p.constraint != nil && dist < 60 {
-		p.constraint.isActive = true
-	}
-
-	if mouse.getDragging() {
-		if dist < 80 {
-			dx := mouse.x - mouse.px
-			dy := mouse.y - mouse.py
-			if dx > p.elasticity {
-				dx = p.elasticity
-			}
-			if dy > p.elasticity {
-				dy = p.elasticity
-			}
-			if dx < -p.elasticity {
-				dx = -p.elasticity
-			}
-			if dy < -p.elasticity {
-				dy = -p.elasticity
-			}
-			p.px = p.x - dx*p.dragForce
-			p.py = p.y - dy*p.dragForce
+	if mouse.getDragging() && dist < clothTearDist {
+		dx := mouse.x - mouse.px
+		dy := mouse.y - mouse.py
+		if dx > p.elasticity {
+			dx = p.elasticity
 		}
+		if dy > p.elasticity {
+			dy = p.elasticity
+		}
+		if dx < -p.elasticity {
+			dx = -p.elasticity
+		}
+		if dy < -p.elasticity {
+			dy = -p.elasticity
+		}
+		p.px = p.x - dx*p.dragForce
+		p.py = p.y - dy*p.dragForce
 	}
 
-	if mouse.getRightMouseButton() {
+	if mouse.getRightMouseButton() && dist < clothMouseTearDist {
 		if dist < 15 {
 			p.constraint.isSelected = false
 		}
+	}
+
+	if mouse.getCtrlDown() {
+		if dist < clothPinDist {
+			p.pinX = true
+		}
+	}
+
+	if p.constraint != nil && dist < clothHighlightDist {
+		p.constraint.isActive = true
 	}
 
 	force := struct{ x, y float64 }{x: 0.0, y: 0.005}
@@ -145,8 +156,4 @@ func (p *Particle) removeConstraint(cloth *Cloth) {
 			break
 		}
 	}
-}
-
-func (p *Particle) increaseFriction(force float64) {
-	p.friction += force
 }

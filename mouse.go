@@ -11,6 +11,7 @@ type Mouse struct {
 	leftDown   bool
 	rightDown  bool
 	isDragging bool
+	ctrlDown   bool
 }
 
 func (m *Mouse) updatePosition(x, y float64) {
@@ -55,4 +56,12 @@ func (m *Mouse) setDragging(dragging bool) {
 
 func (m *Mouse) getDragging() bool {
 	return m.isDragging
+}
+
+func (m *Mouse) setCtrlDown(status bool) {
+	m.ctrlDown = status
+}
+
+func (m *Mouse) getCtrlDown() bool {
+	return m.ctrlDown
 }

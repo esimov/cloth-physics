@@ -42,17 +42,16 @@ func loop(w *app.Window) error {
 		deltaTime int64
 	)
 
-	partCol := color.NRGBA{R: 0x0, G: 0x0, B: 0x0, A: 0xff}
-	stickCol := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
-
-	var clothW int = windowWidth
-	var clothH int = windowHeight * 0.4
-	cloth := NewCloth(clothW, clothH, 11, 2, 0.98, partCol, stickCol)
-
-	initTime := time.Now()
+	col := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 	mouse := &Mouse{}
 	ctrlDown := false
 	isDragging := false
+
+	var clothW int = windowWidth
+	var clothH int = windowHeight * 0.4
+	cloth := NewCloth(clothW, clothH, 11, 2, 0.98, col)
+
+	initTime := time.Now()
 
 	for {
 		select {
@@ -106,12 +105,10 @@ func loop(w *app.Window) error {
 							pos := mouse.getCurrentPosition(ev)
 							mouse.updatePosition(float64(pos.X), float64(pos.Y))
 						case pointer.Press:
-							fmt.Println("Press")
 							if ev.Modifiers == key.ModCtrl {
-								ctrlDown = true
+								mouse.setCtrlDown(true)
 							}
 						case pointer.Release:
-							fmt.Println("Release")
 							isDragging = false
 
 							mouse.releaseLeftMouseButton()
@@ -119,7 +116,7 @@ func loop(w *app.Window) error {
 							mouse.setDragging(isDragging)
 
 							if ev.Modifiers == key.ModCtrl {
-								ctrlDown = false
+								mouse.setCtrlDown(false)
 							}
 						case pointer.Drag:
 							isDragging = true
