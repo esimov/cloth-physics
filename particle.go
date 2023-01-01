@@ -70,6 +70,10 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	dy := p.y - mouse.y
 	dist := math.Sqrt(dx*dx + dy*dy)
 
+	if p.constraint != nil && dist < 60 {
+		p.constraint.isActive = true
+	}
+
 	if mouse.getDragging() {
 		if dist < 80 {
 			dx := mouse.x - mouse.px
@@ -92,8 +96,8 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	}
 
 	if mouse.getRightMouseButton() {
-		if dist < 20 {
-			p.constraint.isActive = false
+		if dist < 15 {
+			p.constraint.isSelected = false
 		}
 	}
 

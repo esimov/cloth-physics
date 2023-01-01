@@ -43,11 +43,11 @@ func loop(w *app.Window) error {
 	)
 
 	partCol := color.NRGBA{R: 0x0, G: 0x0, B: 0x0, A: 0xff}
-	springCol := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
+	stickCol := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 
 	var clothW int = windowWidth
 	var clothH int = windowHeight * 0.4
-	cloth := NewCloth(clothW, clothH, 11, 2, 0.98, partCol, springCol)
+	cloth := NewCloth(clothW, clothH, 11, 2, 0.98, partCol, stickCol)
 
 	initTime := time.Now()
 	mouse := &Mouse{}
@@ -73,7 +73,7 @@ func loop(w *app.Window) error {
 
 				pointer.InputOp{
 					Tag:   w,
-					Types: pointer.Press | pointer.Drag | pointer.Release | pointer.Type(pointer.ButtonPrimary) | pointer.Type(pointer.ButtonSecondary),
+					Types: pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Type(pointer.ButtonPrimary) | pointer.Type(pointer.ButtonSecondary),
 				}.Add(gtx.Ops)
 
 				op.InvalidateOp{}.Add(gtx.Ops)
@@ -102,6 +102,9 @@ func loop(w *app.Window) error {
 					switch ev := ev.(type) {
 					case pointer.Event:
 						switch ev.Type {
+						case pointer.Move:
+							pos := mouse.getCurrentPosition(ev)
+							mouse.updatePosition(float64(pos.X), float64(pos.Y))
 						case pointer.Press:
 							fmt.Println("Press")
 							if ev.Modifiers == key.ModCtrl {

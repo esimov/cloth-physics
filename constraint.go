@@ -12,15 +12,16 @@ import (
 )
 
 type Constraint struct {
-	p1, p2   *Particle
-	length   float64
-	isActive bool
-	color    color.NRGBA
+	p1, p2     *Particle
+	length     float64
+	isSelected bool
+	isActive   bool
+	color      color.NRGBA
 }
 
 func NewConstraint(p1, p2 *Particle, length float64, col color.NRGBA) *Constraint {
 	return &Constraint{
-		p1, p2, length, true, col,
+		p1, p2, length, true, false, col,
 	}
 }
 
@@ -29,6 +30,7 @@ func (c *Constraint) Update(gtx layout.Context, cloth *Cloth, mouse *Mouse) {
 }
 
 func (c *Constraint) Draw(gtx layout.Context) {
+	c.isActive = false
 	c.draw(gtx, c.p1, c.p2)
 }
 
