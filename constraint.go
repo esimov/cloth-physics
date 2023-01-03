@@ -72,7 +72,7 @@ func (c *Constraint) resolve(p1, p2 *Particle, cloth *Cloth, mouse *Mouse) {
 		return
 	}
 	if mouse.getDragging() {
-		if dist > 100 {
+		if dist > 150 {
 			c.p1.removeConstraint(cloth)
 		}
 	}

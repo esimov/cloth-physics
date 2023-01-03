@@ -11,7 +11,6 @@ type Cloth struct {
 	height   int
 	spacing  int
 	friction float64
-	mass     float64
 	color    color.NRGBA
 
 	particles   []*Particle
@@ -20,13 +19,12 @@ type Cloth struct {
 	isInitialized bool
 }
 
-func NewCloth(width, height, spacing int, mass, friction float64, col color.NRGBA) *Cloth {
+func NewCloth(width, height, spacing int, friction float64, col color.NRGBA) *Cloth {
 	return &Cloth{
 		width:    width,
 		height:   height,
 		spacing:  spacing,
 		friction: friction,
-		mass:     mass,
 		color:    col,
 	}
 }
@@ -40,7 +38,7 @@ func (c *Cloth) Init(startX, startY int) {
 			px := startX + x*c.spacing
 			py := startY + y*c.spacing
 
-			particle := NewParticle(float64(px), float64(py), c.mass, c.color)
+			particle := NewParticle(float64(px), float64(py), c.color)
 			particle.friction = c.friction
 
 			// Connect the particles with sticks but skip the particles from the first column and row.
@@ -56,8 +54,8 @@ func (c *Cloth) Init(startX, startY int) {
 				c.constraints = append(c.constraints, constraint)
 			}
 
-			pin := (x + clothX) % (clothX / 8)
-			if y == 0 && (x == 0 || pin == 0) {
+			pinX := x % (clothX / 7)
+			if y == 0 && pinX == 0 {
 				particle.pinX = true
 			}
 
@@ -68,6 +66,9 @@ func (c *Cloth) Init(startX, startY int) {
 }
 
 func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
+	dragForce := float32(mouse.getForce() * 0.75)
+	clothColor := color.NRGBA{R: 0x55, A: 0xff}
+
 	for _, p := range cloth.particles {
 		p.Update(gtx, mouse, delta)
 	}
@@ -80,10 +81,12 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 
 	for _, c := range cloth.constraints {
 		if c.isActive {
-			c.color = color.NRGBA{R: 0xff, A: 0xcc}
+			col := LinearFromSRGB(clothColor).HSLA().Lighten(dragForce).RGBA().SRGB()
+			c.color = color.NRGBA{R: col.R, A: col.A}
 		} else {
 			c.color = cloth.color
 		}
+
 		if c.isSelected {
 			c.Draw(gtx)
 		}

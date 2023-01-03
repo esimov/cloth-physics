@@ -8,6 +8,7 @@ import (
 type Mouse struct {
 	x, y       float64
 	px, py     float64
+	force      float64
 	leftDown   bool
 	rightDown  bool
 	isDragging bool
@@ -26,27 +27,27 @@ func (m *Mouse) getCurrentPosition(ev pointer.Event) f32.Point {
 	return ev.Position
 }
 
-func (m *Mouse) setLeftMouseButton() {
+func (m *Mouse) setLeftButton() {
 	m.leftDown = true
 }
 
-func (m *Mouse) releaseLeftMouseButton() {
+func (m *Mouse) releaseLeftButton() {
 	m.leftDown = false
 }
 
-func (m *Mouse) getLeftMouseButton() bool {
+func (m *Mouse) getLeftButton() bool {
 	return m.leftDown
 }
 
-func (m *Mouse) setRightMouseButton() {
+func (m *Mouse) setRightButton() {
 	m.rightDown = true
 }
 
-func (m *Mouse) releaseRightMouseButton() {
+func (m *Mouse) releaseRightButton() {
 	m.rightDown = false
 }
 
-func (m *Mouse) getRightMouseButton() bool {
+func (m *Mouse) getRightButton() bool {
 	return m.rightDown
 }
 
@@ -64,4 +65,16 @@ func (m *Mouse) setCtrlDown(status bool) {
 
 func (m *Mouse) getCtrlDown() bool {
 	return m.ctrlDown
+}
+
+func (m *Mouse) increaseForce(force float64) {
+	m.force = force
+}
+
+func (m *Mouse) getForce() float64 {
+	return m.force
+}
+
+func (m *Mouse) resetForce() {
+	m.force = 0
 }

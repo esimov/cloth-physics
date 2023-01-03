@@ -11,16 +11,18 @@ import (
 )
 
 const (
-	clothTearDist      = 80
+	clothTearDist      = 60
 	clothMouseTearDist = 15
 	clothHighlightDist = 60
 	clothPinDist       = 8
+	gravityForce       = 600
+	mouseDragForce     = 4.2
 )
 
 type Particle struct {
 	x, y       float64
 	px, py     float64
-	size       float64
+	vx, vy     float64
 	friction   float64
 	elasticity float64
 	dragForce  float64
@@ -29,12 +31,12 @@ type Particle struct {
 	constraint *Constraint
 }
 
-func NewParticle(x, y, size float64, col color.NRGBA) *Particle {
+func NewParticle(x, y float64, col color.NRGBA) *Particle {
 	p := &Particle{
-		x: x, y: y, px: x, py: y, size: size, color: col,
+		x: x, y: y, px: x, py: y, color: col,
 	}
-	p.elasticity = 18.0
-	p.dragForce = 1.9
+	p.elasticity = 25.0
+	p.dragForce = mouseDragForce
 
 	return p
 }
@@ -71,7 +73,8 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	if p.pinX {
 		return
 	}
-	dt *= 1.2
+
+	width, height := gtx.Constraints.Max.X, gtx.Constraints.Max.Y
 
 	dx := p.x - mouse.x
 	dy := p.y - mouse.y
@@ -96,32 +99,32 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 		p.py = p.y - dy*p.dragForce
 	}
 
-	if mouse.getRightMouseButton() && dist < clothMouseTearDist {
-		if dist < 15 {
+	if mouse.getRightButton() {
+		if p.constraint != nil && dist < clothMouseTearDist {
 			p.constraint.isSelected = false
 		}
 	}
 
-	if mouse.getCtrlDown() {
-		if dist < clothPinDist {
-			p.pinX = true
-		}
+	if mouse.getCtrlDown() && dist < clothPinDist {
+		p.pinX = true
 	}
 
 	if p.constraint != nil && dist < clothHighlightDist {
 		p.constraint.isActive = true
 	}
 
-	force := struct{ x, y float64 }{x: 0.0, y: 0.005}
-	// Newton's law of motion: force = acceleration * mass
-	// acceleration = force / mass
-	ax := force.x / p.size
-	ay := force.y / p.size
+	if mouse.getLeftButton() {
+		p.increaseForce(mouse)
+	} else {
+		p.resetForce()
+	}
 
 	px, py := p.x, p.y
+	p.vy += gravityForce
+
 	// velocity = acceleration * deltaTime
 	// position = velocity * deltaTime
-	posX, posY := ax*(dt*dt), ay*(dt*dt)
+	posX, posY := p.vx*(dt*dt), p.vy*(dt*dt)
 
 	// Verlet integration:
 	// x(t+Δt)=2x(t)−x(t−Δt)+a(t)Δt2
@@ -130,23 +133,23 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 
 	p.px, p.py = px, py
 
-	width, height := gtx.Constraints.Max.X, gtx.Constraints.Max.Y
-
-	if p.x >= float64(width)-p.size {
-		p.x = float64(width) - p.size
+	if p.x >= float64(width) {
+		p.x = float64(width)
 		p.px = p.x
 	} else if p.x < 0 {
-		p.x = p.size / 2
+		p.x = 0
 		p.px = p.x
 	}
 
-	if p.y > float64(height)-p.size {
-		p.y = float64(height) - p.size
+	if p.y > float64(height) {
+		p.y = float64(height)
 		p.py = p.y
 	} else if p.y < 0 {
-		p.y = p.size / 2
+		p.y = 0
 		p.py = p.y
 	}
+
+	p.vx, p.vy = 0.0, 0.0
 }
 
 func (p *Particle) removeConstraint(cloth *Cloth) {
@@ -156,4 +159,12 @@ func (p *Particle) removeConstraint(cloth *Cloth) {
 			break
 		}
 	}
+}
+
+func (p *Particle) increaseForce(m *Mouse) {
+	p.dragForce += m.force
+}
+
+func (p *Particle) resetForce() {
+	p.dragForce = mouseDragForce
 }

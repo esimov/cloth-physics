@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image/color"
 	"log"
 	"os"
@@ -18,7 +17,7 @@ import (
 )
 
 const (
-	windowWidth  = 820
+	windowWidth  = 840
 	windowHeight = 540
 )
 
@@ -39,19 +38,17 @@ func main() {
 func loop(w *app.Window) error {
 	var (
 		ops       op.Ops
-		deltaTime int64
+		initTime  time.Time
+		deltaTime time.Duration
 	)
 
 	col := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 	mouse := &Mouse{}
-	ctrlDown := false
 	isDragging := false
 
 	var clothW int = windowWidth
 	var clothH int = windowHeight * 0.4
-	cloth := NewCloth(clothW, clothH, 11, 2, 0.98, col)
-
-	initTime := time.Now()
+	cloth := NewCloth(clothW, clothH, 12, 0.99, col)
 
 	for {
 		select {
@@ -81,6 +78,11 @@ func loop(w *app.Window) error {
 					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace,
 				}.Add(gtx.Ops)
 
+				if mouse.getLeftButton() {
+					deltaTime = time.Now().Sub(initTime)
+					mouse.increaseForce(deltaTime.Seconds())
+				}
+
 				for _, ev := range gtx.Queue.Events(w) {
 					if e, ok := ev.(key.Event); ok {
 						if e.State == key.Press {
@@ -108,11 +110,14 @@ func loop(w *app.Window) error {
 							if ev.Modifiers == key.ModCtrl {
 								mouse.setCtrlDown(true)
 							}
+							mouse.setLeftButton()
+							initTime = time.Now()
 						case pointer.Release:
 							isDragging = false
 
-							mouse.releaseLeftMouseButton()
-							mouse.releaseRightMouseButton()
+							mouse.resetForce()
+							mouse.releaseLeftButton()
+							mouse.releaseRightButton()
 							mouse.setDragging(isDragging)
 
 							if ev.Modifiers == key.ModCtrl {
@@ -120,16 +125,15 @@ func loop(w *app.Window) error {
 							}
 						case pointer.Drag:
 							isDragging = true
-							fmt.Println("DRAGGING: ", ctrlDown)
 						}
 						switch ev.Buttons {
 						case pointer.ButtonPrimary:
-							mouse.setLeftMouseButton()
+							mouse.setLeftButton()
 							pos := mouse.getCurrentPosition(ev)
 							mouse.updatePosition(float64(pos.X), float64(pos.Y))
 							mouse.setDragging(isDragging)
 						case pointer.ButtonSecondary:
-							mouse.setRightMouseButton()
+							mouse.setRightButton()
 							pos := mouse.getCurrentPosition(ev)
 							mouse.updatePosition(float64(pos.X), float64(pos.Y))
 						}
@@ -138,13 +142,8 @@ func loop(w *app.Window) error {
 
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
 
-				currentTime := time.Now()
-				deltaTime = currentTime.Sub(initTime).Milliseconds()
-
-				cloth.Update(gtx, mouse, float64(deltaTime)*0.2)
+				cloth.Update(gtx, mouse, 0.025)
 				e.Frame(gtx.Ops)
-
-				initTime = currentTime
 			}
 		}
 	}
