@@ -24,21 +24,21 @@ const (
 	windowHeight = 540
 )
 
-func main() {
-	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to `file`")
+var (
+	cpuprofile string
+	f          *os.File
+	err        error
+)
 
+func main() {
+	flag.StringVar(&cpuprofile, "debug-cpuprofile", "", "write CPU profile to this file")
 	flag.Parse()
 
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+	if cpuprofile != "" {
+		f, err = os.Create(cpuprofile)
 		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
+			log.Fatal(err)
 		}
-		defer f.Close()
-		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Fatal("could not start CPU profile: ", err)
-		}
-		defer pprof.StopCPUProfile()
 	}
 
 	go func() {
@@ -61,6 +61,9 @@ func loop(w *app.Window) error {
 		deltaTime time.Duration
 		scrollY   unit.Dp
 	)
+	if cpuprofile != "" {
+		defer pprof.StopCPUProfile()
+	}
 
 	col := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 	mouse := &Mouse{maxScrollY: unit.Dp(200)}
@@ -77,6 +80,10 @@ func loop(w *app.Window) error {
 			case system.DestroyEvent:
 				return e.Err
 			case system.FrameEvent:
+				if cpuprofile != "" {
+					pprof.StartCPUProfile(f)
+				}
+
 				gtx := layout.NewContext(&ops, e)
 				if !cloth.isInitialized {
 					width := gtx.Constraints.Max.X
@@ -93,11 +100,11 @@ func loop(w *app.Window) error {
 					ScrollBounds: image.Rectangle{
 						Min: image.Point{
 							X: 0,
-							Y: -40,
+							Y: -30,
 						},
 						Max: image.Point{
 							X: 0,
-							Y: 40,
+							Y: 30,
 						},
 					},
 				}.Add(gtx.Ops)
@@ -182,6 +189,8 @@ func loop(w *app.Window) error {
 
 				cloth.Update(gtx, mouse, 0.025)
 				e.Frame(gtx.Ops)
+
+				w.Invalidate()
 			}
 		}
 	}

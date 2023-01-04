@@ -68,6 +68,7 @@ func (c *Cloth) Init(startX, startY int) {
 func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 	dragForce := float32(mouse.getForce() * 0.75)
 	clothColor := color.NRGBA{R: 0x55, A: 0xff}
+	col := LinearFromSRGB(clothColor).HSLA().Lighten(dragForce).RGBA().SRGB()
 
 	for _, p := range cloth.particles {
 		p.Update(gtx, mouse, delta)
@@ -81,7 +82,6 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 
 	for _, c := range cloth.constraints {
 		if c.isActive {
-			col := LinearFromSRGB(clothColor).HSLA().Lighten(dragForce).RGBA().SRGB()
 			c.color = color.NRGBA{R: col.R, A: col.A}
 		} else {
 			c.color = cloth.color
