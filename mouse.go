@@ -3,12 +3,15 @@ package main
 import (
 	"gioui.org/f32"
 	"gioui.org/io/pointer"
+	"gioui.org/unit"
 )
 
 type Mouse struct {
 	x, y       float64
 	px, py     float64
 	force      float64
+	scrollY    unit.Dp
+	maxScrollY unit.Dp
 	leftDown   bool
 	rightDown  bool
 	isDragging bool
@@ -77,4 +80,12 @@ func (m *Mouse) getForce() float64 {
 
 func (m *Mouse) resetForce() {
 	m.force = 0
+}
+
+func (m *Mouse) setScrollY(scrollY unit.Dp) {
+	m.scrollY = scrollY
+}
+
+func (m *Mouse) getScrollY() unit.Dp {
+	return m.scrollY
 }

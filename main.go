@@ -1,9 +1,12 @@
 package main
 
 import (
+	"flag"
+	"image"
 	"image/color"
 	"log"
 	"os"
+	"runtime/pprof"
 	"time"
 
 	"gioui.org/app"
@@ -22,6 +25,22 @@ const (
 )
 
 func main() {
+	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to `file`")
+
+	flag.Parse()
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+
 	go func() {
 		w := app.NewWindow(
 			app.Title("Tearable Cloth"),
@@ -40,10 +59,11 @@ func loop(w *app.Window) error {
 		ops       op.Ops
 		initTime  time.Time
 		deltaTime time.Duration
+		scrollY   unit.Dp
 	)
 
 	col := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
-	mouse := &Mouse{}
+	mouse := &Mouse{maxScrollY: unit.Dp(200)}
 	isDragging := false
 
 	var clothW int = windowWidth
@@ -69,7 +89,17 @@ func loop(w *app.Window) error {
 
 				pointer.InputOp{
 					Tag:   w,
-					Types: pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Type(pointer.ButtonPrimary) | pointer.Type(pointer.ButtonSecondary),
+					Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Type(pointer.ButtonPrimary) | pointer.Type(pointer.ButtonSecondary),
+					ScrollBounds: image.Rectangle{
+						Min: image.Point{
+							X: 0,
+							Y: -40,
+						},
+						Max: image.Point{
+							X: 0,
+							Y: 40,
+						},
+					},
 				}.Add(gtx.Ops)
 
 				op.InvalidateOp{}.Add(gtx.Ops)
@@ -103,6 +133,14 @@ func loop(w *app.Window) error {
 					switch ev := ev.(type) {
 					case pointer.Event:
 						switch ev.Type {
+						case pointer.Scroll:
+							scrollY += unit.Dp(ev.Scroll.Y)
+							if scrollY < 0 {
+								scrollY = 0
+							} else if scrollY > mouse.maxScrollY {
+								scrollY = mouse.maxScrollY
+							}
+							mouse.setScrollY(scrollY)
 						case pointer.Move:
 							pos := mouse.getCurrentPosition(ev)
 							mouse.updatePosition(float64(pos.X), float64(pos.Y))

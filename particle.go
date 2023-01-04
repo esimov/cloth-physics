@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	clothTearDist      = 60
-	clothMouseTearDist = 15
-	clothHighlightDist = 60
-	clothPinDist       = 8
-	gravityForce       = 600
-	mouseDragForce     = 4.2
+	clothTearDist  = 60
+	clothPinDist   = 8
+	gravityForce   = 600
+	defFocusArea   = 40
+	minFocusArea   = 30
+	maxFocusArea   = 200
+	mouseDragForce = 4.2
 )
 
 type Particle struct {
@@ -99,18 +100,25 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 		p.py = p.y - dy*p.dragForce
 	}
 
-	if mouse.getRightButton() {
-		if p.constraint != nil && dist < clothMouseTearDist {
-			p.constraint.isSelected = false
-		}
-	}
-
 	if mouse.getCtrlDown() && dist < clothPinDist {
 		p.pinX = true
 	}
 
-	if p.constraint != nil && dist < clothHighlightDist {
+	focusArea := mouse.getScrollY() + defFocusArea
+	if focusArea > maxFocusArea {
+		focusArea = maxFocusArea
+	} else if focusArea < minFocusArea {
+		focusArea = minFocusArea
+	}
+
+	if p.constraint != nil && dist < float64(focusArea) {
 		p.constraint.isActive = true
+	}
+
+	if mouse.getRightButton() {
+		if p.constraint != nil && dist < float64(focusArea) {
+			p.constraint.isSelected = false
+		}
 	}
 
 	if mouse.getLeftButton() {
