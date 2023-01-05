@@ -3,7 +3,10 @@ package main
 import (
 	"image/color"
 
+	"gioui.org/f32"
 	"gioui.org/layout"
+	"gioui.org/op/clip"
+	"gioui.org/op/paint"
 )
 
 type Cloth struct {
@@ -80,15 +83,57 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 		}
 	}
 
-	for _, c := range cloth.constraints {
-		if c.isActive {
-			c.color = color.NRGBA{R: col.R, A: col.A}
-		} else {
-			c.color = cloth.color
-		}
+	// For performance reasons we draw the sticks as a single clip path instead of multiple clips paths.
+	// The performance improvement is considerable compared to the multiple clip paths rendered separately.
+	var path clip.Path
+	path.Begin(gtx.Ops)
 
+	for _, c := range cloth.constraints {
 		if c.isSelected {
-			c.Draw(gtx)
+			// We use `clip.Outline` instead of `clip.Stroke` for performance reasons.
+			// For this reason we need to draw the full outline of the stroke.
+			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x+1), float32(c.p2.y)))
+			path.LineTo(f32.Pt(float32(c.p1.x+1), float32(c.p1.y)))
+
+			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y+1)))
+			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y+1)))
+			path.Close()
+		}
+	}
+
+	paint.FillShape(gtx.Ops, cloth.color, clip.Outline{
+		Path: path.End(),
+	}.Op())
+
+	// Here we are drawing the mouse focus area in a separate clip path,
+	// because the color used for highlighting the selected area
+	// should be different than the cloth default color.
+	for _, c := range cloth.constraints {
+		if c.isActive && c.isSelected {
+			path.Begin(gtx.Ops)
+
+			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x+1), float32(c.p2.y)))
+			path.LineTo(f32.Pt(float32(c.p1.x+1), float32(c.p1.y)))
+
+			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y+1)))
+			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y+1)))
+			path.Close()
+
+			c.color = color.NRGBA{R: col.R, A: col.A}
+
+			paint.FillShape(gtx.Ops, c.color, clip.Outline{
+				Path: path.End(),
+			}.Op())
+
+			c.isActive = false
 		}
 	}
 }

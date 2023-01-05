@@ -43,7 +43,7 @@ func main() {
 
 	go func() {
 		w := app.NewWindow(
-			app.Title("Tearable Cloth"),
+			app.Title("Gio - Tearable Cloth"),
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
 		if err := loop(w); err != nil {
@@ -69,9 +69,9 @@ func loop(w *app.Window) error {
 	mouse := &Mouse{maxScrollY: unit.Dp(200)}
 	isDragging := false
 
-	var clothW int = windowWidth
+	var clothW int = windowWidth * 1.2
 	var clothH int = windowHeight * 0.4
-	cloth := NewCloth(clothW, clothH, 12, 0.99, col)
+	cloth := NewCloth(clothW, clothH, 8, 0.99, col)
 
 	for {
 		select {
@@ -187,7 +187,7 @@ func loop(w *app.Window) error {
 
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
 
-				cloth.Update(gtx, mouse, 0.025)
+				cloth.Update(gtx, mouse, 0.015)
 				e.Frame(gtx.Ops)
 
 				w.Invalidate()

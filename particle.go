@@ -16,7 +16,7 @@ const (
 	gravityForce   = 600
 	defFocusArea   = 40
 	minFocusArea   = 30
-	maxFocusArea   = 200
+	maxFocusArea   = 150
 	mouseDragForce = 4.2
 )
 
