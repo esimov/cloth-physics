@@ -22,6 +22,8 @@ type Cloth struct {
 	isInitialized bool
 }
 
+// NewCloth creates a new cloth which dimension is calculated based on
+// the application window width and height and the spacing between the sticks.
 func NewCloth(width, height, spacing int, friction float64, col color.NRGBA) *Cloth {
 	return &Cloth{
 		width:    width,
@@ -32,6 +34,8 @@ func NewCloth(width, height, spacing int, friction float64, col color.NRGBA) *Cl
 	}
 }
 
+// Init initializes the cloth where the `startX` and `startY`
+// is the {x, y} position of the cloth's the top-left side.
 func (c *Cloth) Init(startX, startY int) {
 	clothX := c.width / c.spacing
 	clothY := c.height / c.spacing
@@ -68,9 +72,13 @@ func (c *Cloth) Init(startX, startY int) {
 	c.isInitialized = true
 }
 
+// Update is invoked on each frame event of the Gio internal window calls.
+// It updates the cloth particles, which are the basic entities over the
+// cloth constraints are applied and solved using Verlet integration.
 func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 	dragForce := float32(mouse.getForce() * 0.75)
 	clothColor := color.NRGBA{R: 0x55, A: 0xff}
+	// Convert the RGB color to HSL based on the applied force over the mouse focus area.
 	col := LinearFromSRGB(clothColor).HSLA().Lighten(dragForce).RGBA().SRGB()
 
 	for _, p := range cloth.particles {
@@ -83,15 +91,15 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 		}
 	}
 
-	// For performance reasons we draw the sticks as a single clip path instead of multiple clips paths.
-	// The performance improvement is considerable compared to the multiple clip paths rendered separately.
 	var path clip.Path
 	path.Begin(gtx.Ops)
 
+	// For performance reasons we draw the sticks as a single clip path instead of multiple clips paths.
+	// The performance improvement is considerable compared to the multiple clip paths rendered separately.
 	for _, c := range cloth.constraints {
 		if c.isSelected {
-			// We use `clip.Outline` instead of `clip.Stroke` for performance reasons.
-			// For this reason we need to draw the full outline of the stroke.
+			// We are using `clip.Outline` instead of `clip.Stroke` for performance reasons.
+			// But we need to draw the full outline of the stroke.
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x+1), float32(c.p2.y)))
@@ -111,7 +119,7 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 
 	// Here we are drawing the mouse focus area in a separate clip path,
 	// because the color used for highlighting the selected area
-	// should be different than the cloth default color.
+	// should be different than the cloth's default color.
 	for _, c := range cloth.constraints {
 		if c.isActive && c.isSelected {
 			path.Begin(gtx.Ops)
@@ -138,6 +146,7 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 	}
 }
 
+// Reset resets the cloth to the initial state.
 func (c *Cloth) Reset(startX, startY int) {
 	c.constraints = nil
 	c.particles = nil

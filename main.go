@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	windowWidth  = 840
-	windowHeight = 540
+	windowWidth  = 940
+	windowHeight = 580
 )
 
 var (
@@ -164,10 +164,7 @@ func loop(w *app.Window) error {
 							mouse.releaseLeftButton()
 							mouse.releaseRightButton()
 							mouse.setDragging(isDragging)
-
-							if ev.Modifiers == key.ModCtrl {
-								mouse.setCtrlDown(false)
-							}
+							mouse.setCtrlDown(false)
 						case pointer.Drag:
 							isDragging = true
 						}

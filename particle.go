@@ -12,14 +12,16 @@ import (
 
 const (
 	clothTearDist  = 60
-	clothPinDist   = 8
+	clothPinDist   = 4
 	gravityForce   = 600
 	defFocusArea   = 40
 	minFocusArea   = 30
 	maxFocusArea   = 150
 	mouseDragForce = 4.2
+	maxDragForce   = 20
 )
 
+// Particle holds the basic components of the particle system.
 type Particle struct {
 	x, y       float64
 	px, py     float64
@@ -32,6 +34,7 @@ type Particle struct {
 	constraint *Constraint
 }
 
+// NewParticle initializes a new Particle.
 func NewParticle(x, y float64, col color.NRGBA) *Particle {
 	p := &Particle{
 		x: x, y: y, px: x, py: y, color: col,
@@ -42,11 +45,13 @@ func NewParticle(x, y float64, col color.NRGBA) *Particle {
 	return p
 }
 
+// Update updates the particle system using the Verlet integration.
 func (p *Particle) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 	//p.draw(gtx, float32(p.x), float32(p.y), 2)
 	p.update(gtx, mouse, delta)
 }
 
+// draw draws the particle at the {x, y} position with the radius `r`.
 func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 	var (
 		sq   float64
@@ -70,11 +75,13 @@ func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 	paint.PaintOp{}.Add(gtx.Ops)
 }
 
+// update is an internal method to update the cloth system using Verlet integration.
 func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	if p.pinX {
 		return
 	}
 
+	// Window width and height.
 	width, height := gtx.Constraints.Max.X, gtx.Constraints.Max.Y
 
 	dx := p.x - mouse.x
@@ -100,10 +107,12 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 		p.py = p.y - dy*p.dragForce
 	}
 
+	// Pin up the particle if the mouse is pressed combined with the CTRL key.
 	if mouse.getCtrlDown() && dist < clothPinDist {
 		p.pinX = true
 	}
 
+	// Modify the mouse focus area size on scrolling.
 	focusArea := mouse.getScrollY() + defFocusArea
 	if focusArea > maxFocusArea {
 		focusArea = maxFocusArea
@@ -115,12 +124,15 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 		p.constraint.isActive = true
 	}
 
+	// With right click we can tear up the cloth at the mouse position.
 	if mouse.getRightButton() {
 		if p.constraint != nil && dist < float64(focusArea) {
 			p.constraint.isSelected = false
 		}
 	}
 
+	// Holding the left mouse button will increase the dragging force
+	// resulting in a much advanced cloth destruction.
 	if mouse.getLeftButton() {
 		p.increaseForce(mouse)
 	} else {
@@ -160,6 +172,7 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	p.vx, p.vy = 0.0, 0.0
 }
 
+// removeConstraint removes a specific constraint (stick) from the collection, stored into a slice.
 func (p *Particle) removeConstraint(cloth *Cloth) {
 	for idx, c := range cloth.constraints {
 		if c == p.constraint {
@@ -169,10 +182,15 @@ func (p *Particle) removeConstraint(cloth *Cloth) {
 	}
 }
 
+// increaseForce increases the dragging force.
 func (p *Particle) increaseForce(m *Mouse) {
 	p.dragForce += m.force
+	if p.dragForce > maxDragForce {
+		p.dragForce = maxDragForce
+	}
 }
 
+// resetForce resets the dragging force to the default value.
 func (p *Particle) resetForce() {
 	p.dragForce = mouseDragForce
 }

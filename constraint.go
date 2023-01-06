@@ -4,11 +4,7 @@ import (
 	"image/color"
 	"math"
 
-	"gioui.org/f32"
 	"gioui.org/layout"
-	"gioui.org/op"
-	"gioui.org/op/clip"
-	"gioui.org/op/paint"
 )
 
 type Constraint struct {
@@ -19,58 +15,27 @@ type Constraint struct {
 	color      color.NRGBA
 }
 
+// NewConstraint creates a new constraint between two points/particles.
+// The constraint actually is a stick which connects two points.
 func NewConstraint(p1, p2 *Particle, length float64, col color.NRGBA) *Constraint {
 	return &Constraint{
 		p1, p2, length, true, false, col,
 	}
 }
 
+// Update updates the stick between two points by resolving the constraints between them.
 func (c *Constraint) Update(gtx layout.Context, cloth *Cloth, mouse *Mouse) {
-	c.resolve(c.p1, c.p2, cloth, mouse)
-}
+	c.p1.constraint = c
 
-func (c *Constraint) Draw(gtx layout.Context) {
-	c.isActive = false
-	c.draw(gtx, c.p1, c.p2)
-}
-
-func (c *Constraint) draw(gtx layout.Context, p1, p2 *Particle) {
-	var path clip.Path
-
-	drawLine := func(ops *op.Ops) clip.PathSpec {
-		path.Begin(gtx.Ops)
-
-		// We use `clip.Outline` instead of `clip.Stroke` for performance reasons.
-		// For this reason we need to draw the full outline of the stroke.
-		path.MoveTo(f32.Pt(float32(p1.x), float32(p1.y)))
-		path.LineTo(f32.Pt(float32(p2.x), float32(p2.y)))
-		path.LineTo(f32.Pt(float32(p2.x+1), float32(p2.y)))
-		path.LineTo(f32.Pt(float32(p1.x+1), float32(p1.y)))
-
-		path.MoveTo(f32.Pt(float32(p1.x), float32(p1.y)))
-		path.LineTo(f32.Pt(float32(p2.x), float32(p2.y)))
-		path.LineTo(f32.Pt(float32(p2.x), float32(p2.y+1)))
-		path.LineTo(f32.Pt(float32(p1.x), float32(p1.y+1)))
-		path.Close()
-
-		return path.End()
-	}
-
-	paint.FillShape(gtx.Ops, c.color, clip.Outline{
-		Path: drawLine(gtx.Ops),
-	}.Op())
-}
-
-func (c *Constraint) resolve(p1, p2 *Particle, cloth *Cloth, mouse *Mouse) {
-	p1.constraint = c
-
-	dx := p1.x - p2.x
-	dy := p1.y - p2.y
+	dx := c.p1.x - c.p2.x
+	dy := c.p1.y - c.p2.y
 	dist := math.Sqrt(dx*dx + dy*dy)
 
 	if dist < c.length {
 		return
 	}
+	// Tear up the cloth under the mouse position if the applied force exceeds a certain threshold.
+	// The threshold is the distance between the two points.
 	if mouse.getDragging() {
 		if dist > 150 {
 			c.p1.removeConstraint(cloth)
@@ -82,12 +47,12 @@ func (c *Constraint) resolve(p1, p2 *Particle, cloth *Cloth, mouse *Mouse) {
 
 	offsetX, offsetY := dx*mul, dy*mul
 
-	if !p1.pinX {
-		p1.x += offsetX
-		p1.y += offsetY
+	if !c.p1.pinX {
+		c.p1.x += offsetX
+		c.p1.y += offsetY
 	}
-	if !p2.pinX {
-		p2.x -= offsetX
-		p2.y -= offsetY
+	if !c.p2.pinX {
+		c.p2.x -= offsetX
+		c.p2.y -= offsetY
 	}
 }
