@@ -20,6 +20,11 @@ $ go run ./...
 
 Another way to run it is to build the executable yourself then simply run it. If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/gio-cloth/packages) page.
 
+```bash
+$ go build ./...
+$ gio-cloth
+```
+
 ## Supported key bindings:
 * <kbd>SPACE</kbd> - Reset the cloth to the default values
 * <kbd>RIGHT CLICK</kbd> - Make a hole in the cloth structure
