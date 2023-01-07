@@ -14,19 +14,21 @@ It has the following characteristics:
 <p align="center"><img src="./cloth-sim.gif"/></p>
 
 ## How to run
-Before running the application check the Gio [documentation](https://gioui.org/doc/install) for the system requirements.
+Before running the application check the Gio [documentation](https://gioui.org/doc/install) for the system requirements. Install the required dependencies then type the following commands.
 
 ```bash
 $ git clone https://github.com/esimov/gio-cloth
 $ go run ./...
 ```
 
-Another way to run it is to build the executable yourself then simply run it. If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/gio-cloth/packages) page.
+Another way is to build the executable yourself then simply run it. 
 
 ```bash
 $ go build ./...
 $ gio-cloth
 ```
+
+If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/gio-cloth/packages) page.
 
 ## Supported key bindings:
 * <kbd>SPACE</kbd> - Reset the cloth to the default values
