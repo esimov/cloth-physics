@@ -34,16 +34,16 @@ func NewCloth(width, height, spacing int, friction float64, col color.NRGBA) *Cl
 	}
 }
 
-// Init initializes the cloth where the `startX` and `startY`
+// Init initializes the cloth where the `posX` and `posY`
 // is the {x, y} position of the cloth's the top-left side.
-func (c *Cloth) Init(startX, startY int) {
+func (c *Cloth) Init(posX, posY int) {
 	clothX := c.width / c.spacing
 	clothY := c.height / c.spacing
 
 	for y := 0; y <= clothY; y++ {
 		for x := 0; x <= clothX; x++ {
-			px := startX + x*c.spacing
-			py := startY + y*c.spacing
+			px := posX + x*c.spacing
+			py := posY + y*c.spacing
 
 			particle := NewParticle(float64(px), float64(py), c.color)
 			particle.friction = c.friction
