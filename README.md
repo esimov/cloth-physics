@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/github/license/esimov/gio-cloth)](./LICENSE)
 [![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/esimov/gio-cloth/releases/tag/v0.1.0)
 
-**gio-cloth** is a [Go](https://golang.org/) desktop application using [Gio](https://gioui.org) for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_inteegration).
+**gio-cloth** is a [Go](https://golang.org/) desktop application using [Gio](https://gioui.org) for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration).
 
 It has the following characteristics:
 - [x] Possibility to tear up the cloth by applying a mouse pressure on the cloth structure. You can increase the mouse dragging force by pressing and holding the left mouse button. The mouse focus area will change its color depending on the applied force.
