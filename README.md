@@ -1,7 +1,7 @@
 # gio-cloth
 [![Build](https://github.com/esimov/gio-cloth/actions/workflows/build.yml/badge.svg)](https://github.com/esimov/gio-cloth/actions/workflows/build.yml)
 [![License](https://img.shields.io/github/license/esimov/gio-cloth)](./LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.1-blue.svg)](https://github.com/esimov/gio-cloth/releases/tag/v1.0.1)
+[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/esimov/gio-cloth/releases/tag/v0.1.0)
 
 **gio-cloth** is a [Go](https://golang.org/) desktop application using [Gio](https://gioui.org) for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_inteegration).
 
