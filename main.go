@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gioui.org/app"
+	"gioui.org/font/gofont"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
 	"gioui.org/io/system"
@@ -17,6 +18,9 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
+	"gioui.org/widget/material"
+
+	"github.com/loov/hrtime"
 )
 
 const (
@@ -26,12 +30,14 @@ const (
 
 var (
 	cpuprofile string
+	debugFrame bool
 	f          *os.File
 	err        error
 )
 
 func main() {
 	flag.StringVar(&cpuprofile, "debug-cpuprofile", "", "write CPU profile to this file")
+	flag.BoolVar(&debugFrame, "debug-frame", false, "debug the Gio frame rates")
 	flag.Parse()
 
 	if cpuprofile != "" {
@@ -65,11 +71,13 @@ func loop(w *app.Window) error {
 		defer pprof.StopCPUProfile()
 	}
 
+	th := material.NewTheme(gofont.Collection())
+
 	col := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 	mouse := &Mouse{maxScrollY: unit.Dp(200)}
 	isDragging := false
 
-	var clothW int = windowWidth * 1.2
+	var clothW int = windowWidth * 1.3
 	var clothH int = windowHeight * 0.4
 	cloth := NewCloth(clothW, clothH, 8, 0.99, col)
 
@@ -80,6 +88,7 @@ func loop(w *app.Window) error {
 			case system.DestroyEvent:
 				return e.Err
 			case system.FrameEvent:
+				start := hrtime.Now()
 				if cpuprofile != "" {
 					pprof.StartCPUProfile(f)
 				}
@@ -109,7 +118,6 @@ func loop(w *app.Window) error {
 					},
 				}.Add(gtx.Ops)
 
-				op.InvalidateOp{}.Add(gtx.Ops)
 				key.InputOp{
 					Tag:  w,
 					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace,
@@ -181,13 +189,24 @@ func loop(w *app.Window) error {
 						}
 					}
 				}
-
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
 
 				cloth.Update(gtx, mouse, 0.015)
-				e.Frame(gtx.Ops)
 
-				w.Invalidate()
+				if debugFrame {
+					layout.Stack{}.Layout(gtx,
+						layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+							op.Offset(image.Pt(10, 10)).Add(gtx.Ops)
+							return layout.E.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+								m := material.Label(th, unit.Sp(15), hrtime.Since(start).String())
+								m.Color = color.NRGBA{R: 127, G: 0, B: 0, A: 255}
+								return m.Layout(gtx)
+							})
+						}))
+				}
+
+				op.InvalidateOp{}.Add(gtx.Ops)
+				e.Frame(gtx.Ops)
 			}
 		}
 	}

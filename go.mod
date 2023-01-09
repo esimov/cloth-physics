@@ -1,8 +1,11 @@
 module github.com/esimov/gio-cloth
 
-go 1.18
+go 1.19
 
-require gioui.org v0.0.0-20221216233230-5d1d1df2061c
+require (
+	gioui.org v0.0.0-20230107005120-f8221bb2ab3a
+	github.com/loov/hrtime v1.0.3
+)
 
 require (
 	gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2 // indirect
