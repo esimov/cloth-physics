@@ -86,7 +86,7 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 	}
 
 	for _, c := range cloth.constraints {
-		if c.isSelected {
+		if c.p1.isActive {
 			c.Update(gtx, cloth, mouse)
 		}
 	}
@@ -97,7 +97,7 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 	// For performance reasons we draw the sticks as a single clip path instead of multiple clips paths.
 	// The performance improvement is considerable compared to the multiple clip paths rendered separately.
 	for _, c := range cloth.constraints {
-		if c.isSelected {
+		if c.p1.isActive {
 			// We are using `clip.Outline` instead of `clip.Stroke` for performance reasons.
 			// But we need to draw the full outline of the stroke.
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
@@ -121,7 +121,8 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 	// because the color used for highlighting the selected area
 	// should be different than the cloth's default color.
 	for _, c := range cloth.constraints {
-		if c.isActive && c.isSelected {
+		if (c.p1.isActive && c.p1.highlighted) &&
+			(c.p2.isActive && c.p2.highlighted) {
 			path.Begin(gtx.Ops)
 
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
@@ -140,8 +141,6 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 			paint.FillShape(gtx.Ops, c.color, clip.Outline{
 				Path: path.End(),
 			}.Op())
-
-			c.isActive = false
 		}
 	}
 }

@@ -8,25 +8,21 @@ import (
 )
 
 type Constraint struct {
-	p1, p2     *Particle
-	length     float64
-	isSelected bool
-	isActive   bool
-	color      color.NRGBA
+	p1, p2 *Particle
+	length float64
+	color  color.NRGBA
 }
 
 // NewConstraint creates a new constraint between two points/particles.
 // The constraint actually is a stick which connects two points.
 func NewConstraint(p1, p2 *Particle, length float64, col color.NRGBA) *Constraint {
 	return &Constraint{
-		p1, p2, length, true, false, col,
+		p1, p2, length, col,
 	}
 }
 
 // Update updates the stick between two points by resolving the constraints between them.
 func (c *Constraint) Update(gtx layout.Context, cloth *Cloth, mouse *Mouse) {
-	c.p1.constraint = c
-
 	dx := c.p1.x - c.p2.x
 	dy := c.p1.y - c.p2.y
 	dist := math.Sqrt(dx*dx + dy*dy)
@@ -38,7 +34,7 @@ func (c *Constraint) Update(gtx layout.Context, cloth *Cloth, mouse *Mouse) {
 	// The threshold is the distance between the two points.
 	if mouse.getDragging() {
 		if dist > 150 {
-			c.p1.removeConstraint(cloth)
+			c.removeConstraint(cloth)
 		}
 	}
 
@@ -54,5 +50,15 @@ func (c *Constraint) Update(gtx layout.Context, cloth *Cloth, mouse *Mouse) {
 	if !c.p2.pinX {
 		c.p2.x -= offsetX
 		c.p2.y -= offsetY
+	}
+}
+
+// removeConstraint removes a specific constraint (stick) from the collection, stored into a slice.
+func (c *Constraint) removeConstraint(cloth *Cloth) {
+	for idx, constraint := range cloth.constraints {
+		if c == constraint {
+			cloth.constraints = append(cloth.constraints[:idx], cloth.constraints[idx+1:]...)
+			break
+		}
 	}
 }

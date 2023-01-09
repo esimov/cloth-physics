@@ -14,7 +14,7 @@ const (
 	clothTearDist  = 60
 	clothPinDist   = 4
 	gravityForce   = 600
-	defFocusArea   = 40
+	defFocusArea   = 50
 	minFocusArea   = 30
 	maxFocusArea   = 150
 	mouseDragForce = 4.2
@@ -23,15 +23,16 @@ const (
 
 // Particle holds the basic components of the particle system.
 type Particle struct {
-	x, y       float64
-	px, py     float64
-	vx, vy     float64
-	friction   float64
-	elasticity float64
-	dragForce  float64
-	pinX       bool
-	color      color.NRGBA
-	constraint *Constraint
+	x, y        float64
+	px, py      float64
+	vx, vy      float64
+	friction    float64
+	elasticity  float64
+	dragForce   float64
+	pinX        bool
+	isActive    bool
+	highlighted bool
+	color       color.NRGBA
 }
 
 // NewParticle initializes a new Particle.
@@ -39,6 +40,8 @@ func NewParticle(x, y float64, col color.NRGBA) *Particle {
 	p := &Particle{
 		x: x, y: y, px: x, py: y, color: col,
 	}
+	p.isActive = true
+	p.highlighted = false
 	p.elasticity = 25.0
 	p.dragForce = mouseDragForce
 
@@ -77,6 +80,8 @@ func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 
 // update is an internal method to update the cloth system using Verlet integration.
 func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
+	p.highlighted = false
+
 	if p.pinX {
 		return
 	}
@@ -120,14 +125,14 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 		focusArea = minFocusArea
 	}
 
-	if p.constraint != nil && dist < float64(focusArea) {
-		p.constraint.isActive = true
+	if dist < float64(focusArea) {
+		p.highlighted = true
 	}
 
 	// With right click we can tear up the cloth at the mouse position.
 	if mouse.getRightButton() {
-		if p.constraint != nil && dist < float64(focusArea) {
-			p.constraint.isSelected = false
+		if dist < float64(focusArea) {
+			p.isActive = false
 		}
 	}
 
@@ -170,16 +175,6 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	}
 
 	p.vx, p.vy = 0.0, 0.0
-}
-
-// removeConstraint removes a specific constraint (stick) from the collection, stored into a slice.
-func (p *Particle) removeConstraint(cloth *Cloth) {
-	for idx, c := range cloth.constraints {
-		if c == p.constraint {
-			cloth.constraints = append(cloth.constraints[:idx], cloth.constraints[idx+1:]...)
-			break
-		}
-	}
 }
 
 // increaseForce increases the dragging force.
