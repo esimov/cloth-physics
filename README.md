@@ -30,6 +30,16 @@ $ gio-cloth
 
 If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/gio-cloth/packages) page.
 
+#### Debugging:
+```bash
+$ gio-cloth -h
+
+  -debug-cpuprofile string
+        write CPU profile to this file
+  -debug-frame
+        debug the Gio frame rates
+```
+
 ## Supported key bindings:
 * <kbd>SPACE</kbd> - Reset the cloth to the default values
 * <kbd>RIGHT CLICK</kbd> - Make a hole in the cloth structure
