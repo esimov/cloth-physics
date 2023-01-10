@@ -1,9 +1,9 @@
-# gio-cloth
-[![Build](https://github.com/esimov/gio-cloth/actions/workflows/build.yml/badge.svg)](https://github.com/esimov/gio-cloth/actions/workflows/build.yml)
-[![License](https://img.shields.io/github/license/esimov/gio-cloth)](./LICENSE)
-[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/esimov/gio-cloth/releases/tag/v0.1.0)
+# cloth-physics
+[![Build](https://github.com/esimov/cloth-physics/actions/workflows/build.yml/badge.svg)](https://github.com/esimov/cloth-physics/actions/workflows/build.yml)
+[![License](https://img.shields.io/github/license/esimov/cloth-physics)](./LICENSE)
+[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/esimov/cloth-physics/releases/tag/v0.1.0)
 
-**gio-cloth** is a [Go](https://golang.org/) desktop application using [Gio](https://gioui.org) for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration).
+**cloth-physics** is a native desktop application for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration). It's written in [Gio](https://gioui.org) a GUI framework for [Go](https://golang.org/).
 
 It has the following characteristics:
 - [x] Possibility to tear up the cloth by applying a mouse pressure on the cloth structure. You can increase the mouse dragging force by pressing and holding the left mouse button. The mouse focus area will change its color depending on the applied force.
@@ -17,7 +17,7 @@ It has the following characteristics:
 Before running the application check the Gio [documentation](https://gioui.org/doc/install) for the system requirements. Install the required dependencies then type the following commands.
 
 ```bash
-$ git clone https://github.com/esimov/gio-cloth
+$ git clone https://github.com/esimov/cloth-physics
 $ go run ./...
 ```
 
@@ -25,14 +25,14 @@ Another way is to build the executable yourself then simply run it.
 
 ```bash
 $ go build ./...
-$ gio-cloth
+$ cloth-physics
 ```
 
-If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/gio-cloth/packages) page.
+If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/cloth-physics/packages) page.
 
 #### Debugging:
 ```bash
-$ gio-cloth -h
+$ cloth-physics -h
 
   -debug-cpuprofile string
         write CPU profile to this file
@@ -53,4 +53,4 @@ $ gio-cloth -h
 ## License
 Copyright © 2023 Endre Simo
 
-This software is distributed under the MIT license. See the [LICENSE](https://github.com/esimov/gio-cloth/blob/master/LICENSE) file for the full license text.
+This software is distributed under the MIT license. See the [LICENSE](https://github.com/esimov/cloth-physics/blob/master/LICENSE) file for the full license text.
