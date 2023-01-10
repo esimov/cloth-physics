@@ -1,4 +1,4 @@
-module github.com/esimov/gio-cloth
+module github.com/esimov/cloth-physics
 
 go 1.19
 

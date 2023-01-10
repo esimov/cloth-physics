@@ -12,13 +12,13 @@ WD=$OD
 
 package() {
 	echo Packaging $1 Binary
-	bdir=cloth-sim-${VERSION}-$2-$3
+	bdir=cloth-physics-${VERSION}-$2-$3
 	rm -rf packages/$bdir && mkdir -p packages/$bdir
 	GOOS=$2 GOARCH=$3 ./build.sh
 	if [ "$2" == "windows" ]; then
-		mv cloth-sim packages/$bdir/cloth-sim.exe
+		mv cloth-physics packages/$bdir/cloth-physics.exe
 	else
-		mv cloth-sim packages/$bdir
+		mv cloth-physics packages/$bdir
 	fi
 	cp README.md packages/$bdir
 	cd packages
@@ -48,11 +48,11 @@ trap rmtemp EXIT
 
 if [ "$NOCOPY" != "1" ]; then
 	# copy all files to an isolated directory.
-	WD="$TMP/src/github.com/esimov/cloth-sim"
+	WD="$TMP/src/github.com/esimov/cloth-physics"
 	export GOPATH="$TMP"
 	for file in `find . -type f`; do
 		# TODO: use .gitignore to ignore, or possibly just use git to determine the file list.
-		if [[ "$file" != "." && "$file" != ./.git* && "$file" != ./cloth-sim ]]; then
+		if [[ "$file" != "." && "$file" != ./.git* && "$file" != ./cloth-physics ]]; then
 			mkdir -p "$WD/$(dirname "${file}")"
 			cp -P "$file" "$WD/$(dirname "${file}")"
 		fi
@@ -61,4 +61,4 @@ if [ "$NOCOPY" != "1" ]; then
 fi
 
 # build and store objects into original directory.
-go build -ldflags "-X main.Version=$VERSION" -o "$OD/cloth-sim" ./...
+go build -ldflags "-X main.Version=$VERSION" -o "$OD/cloth-physics" ./...

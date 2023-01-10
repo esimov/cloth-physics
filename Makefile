@@ -1,10 +1,10 @@
 all: 
 	@./build.sh
 clean:
-	@rm -f gio-cloth
+	@rm -f cloth-physics
 install: all
-	@cp gio-cloth /usr/local/bin
+	@cp cloth-physics /usr/local/bin
 uninstall: 
-	@rm -f /usr/local/bin/gio-cloth
+	@rm -f /usr/local/bin/cloth-physics
 package:
 	@NOCOPY=1 ./build.sh package
