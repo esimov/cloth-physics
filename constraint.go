@@ -39,7 +39,7 @@ func (c *Constraint) Update(gtx layout.Context, cloth *Cloth, mouse *Mouse) {
 	}
 
 	diff := (c.length - dist) / dist
-	mul := diff * 0.4 * (1 - c.length/dist)
+	mul := diff * 0.35 * (1 - c.length/dist)
 
 	offsetX, offsetY := dx*mul, dy*mul
 

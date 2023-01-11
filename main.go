@@ -49,7 +49,7 @@ func main() {
 
 	go func() {
 		w := app.NewWindow(
-			app.Title("Gio - Tearable Cloth"),
+			app.Title("Gio - 2D Cloth Simulation"),
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
 		if err := loop(w); err != nil {
@@ -190,7 +190,6 @@ func loop(w *app.Window) error {
 					}
 				}
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
-
 				cloth.Update(gtx, mouse, 0.015)
 
 				if debugFrame {

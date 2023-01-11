@@ -42,7 +42,7 @@ func NewParticle(x, y float64, col color.NRGBA) *Particle {
 	}
 	p.isActive = true
 	p.highlighted = false
-	p.elasticity = 25.0
+	p.elasticity = 30.0
 	p.dragForce = mouseDragForce
 
 	return p
