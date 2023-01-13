@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -29,19 +30,17 @@ const (
 )
 
 var (
-	cpuprofile string
-	debugFrame bool
-	f          *os.File
-	err        error
+	profile string
+	f       *os.File
+	err     error
 )
 
 func main() {
-	flag.StringVar(&cpuprofile, "debug-cpuprofile", "", "write CPU profile to this file")
-	flag.BoolVar(&debugFrame, "debug-frame", false, "debug the Gio frame rates")
+	flag.StringVar(&profile, "debug-cpuprofile", "", "write CPU profile to this file")
 	flag.Parse()
 
-	if cpuprofile != "" {
-		f, err = os.Create(cpuprofile)
+	if profile != "" {
+		f, err = os.Create(profile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -64,22 +63,31 @@ func loop(w *app.Window) error {
 	var (
 		ops       op.Ops
 		initTime  time.Time
+		hudTime   time.Time
 		deltaTime time.Duration
 		scrollY   unit.Dp
+		mouseY    float32
+		showHud   bool
 	)
-	if cpuprofile != "" {
+	if profile != "" {
 		defer pprof.StopCPUProfile()
 	}
 
-	th := material.NewTheme(gofont.Collection())
+	defaultColor := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 
-	col := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
+	th := material.NewTheme(gofont.Collection())
+	th.TextSize = unit.Sp(12)
+	th.Palette.ContrastBg = defaultColor
+	th.FingerSize = 15
+
+	hud := NewHud(windowWidth, 200)
+
 	mouse := &Mouse{maxScrollY: unit.Dp(200)}
 	isDragging := false
 
 	var clothW int = windowWidth * 1.3
 	var clothH int = windowHeight * 0.4
-	cloth := NewCloth(clothW, clothH, 8, 0.99, col)
+	cloth := NewCloth(clothW, clothH, 8, 0.99, defaultColor)
 
 	for {
 		select {
@@ -89,18 +97,30 @@ func loop(w *app.Window) error {
 				return e.Err
 			case system.FrameEvent:
 				start := hrtime.Now()
-				if cpuprofile != "" {
+				gtx := layout.NewContext(&ops, e)
+
+				isInsideHud := func() bool {
+					if int(mouseY) > gtx.Constraints.Max.Y-hud.height {
+						return true
+					}
+					return false
+				}
+
+				if showHud && !isInsideHud() {
+					showHud = false
+				}
+
+				if profile != "" {
 					pprof.StartCPUProfile(f)
 				}
 
-				gtx := layout.NewContext(&ops, e)
 				if !cloth.isInitialized {
 					width := gtx.Constraints.Max.X
 					height := gtx.Constraints.Max.Y
 
 					startX := width/2 - clothW/2
 					startY := int(float64(height) * 0.2)
-					cloth.Init(startX, startY)
+					cloth.Init(startX, startY, hud)
 				}
 
 				pointer.InputOp{
@@ -128,6 +148,11 @@ func loop(w *app.Window) error {
 					mouse.increaseForce(deltaTime.Seconds())
 				}
 
+				hudDeltaTime := time.Now().Sub(hudTime).Seconds()
+				if hudDeltaTime > 0.5 && int(mouseY) > gtx.Constraints.Max.Y-50 {
+					showHud = true
+				}
+
 				for _, ev := range gtx.Queue.Events(w) {
 					if e, ok := ev.(key.Event); ok {
 						if e.State == key.Press {
@@ -137,7 +162,7 @@ func loop(w *app.Window) error {
 
 								startX := width/2 - clothW/2
 								startY := int(float64(height) * 0.2)
-								cloth.Reset(startX, startY)
+								cloth.Reset(startX, startY, hud)
 							}
 						}
 						if e.Name == key.NameEscape {
@@ -147,6 +172,7 @@ func loop(w *app.Window) error {
 
 					switch ev := ev.(type) {
 					case pointer.Event:
+						fmt.Println(ev.Type)
 						switch ev.Type {
 						case pointer.Scroll:
 							scrollY += unit.Dp(ev.Scroll.Y)
@@ -159,6 +185,9 @@ func loop(w *app.Window) error {
 						case pointer.Move:
 							pos := mouse.getCurrentPosition(ev)
 							mouse.updatePosition(float64(pos.X), float64(pos.Y))
+							if !showHud {
+								hudTime = time.Now()
+							}
 						case pointer.Press:
 							if ev.Modifiers == key.ModCtrl {
 								mouse.setCtrlDown(true)
@@ -186,22 +215,38 @@ func loop(w *app.Window) error {
 							mouse.setRightButton()
 							pos := mouse.getCurrentPosition(ev)
 							mouse.updatePosition(float64(pos.X), float64(pos.Y))
+						default:
+							mouseY = mouse.getCurrentPosition(ev).Y
 						}
 					}
 				}
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
-				cloth.Update(gtx, mouse, 0.015)
 
-				if debugFrame {
+				layout.Stack{}.Layout(gtx,
+					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+						cloth.Update(gtx, mouse, hud, 0.015)
+						return layout.Dimensions{}
+					}),
+
+					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+						if showHud {
+							hud.ShowControls(gtx, th, mouse)
+						}
+						return layout.Dimensions{}
+					}),
+				)
+
+				if hud.debug.Value {
 					layout.Stack{}.Layout(gtx,
 						layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 							op.Offset(image.Pt(10, 10)).Add(gtx.Ops)
 							return layout.E.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 								m := material.Label(th, unit.Sp(15), hrtime.Since(start).String())
-								m.Color = color.NRGBA{R: 127, G: 0, B: 0, A: 255}
+								m.Color = defaultColor
 								return m.Layout(gtx)
 							})
-						}))
+						}),
+					)
 				}
 
 				op.InvalidateOp{}.Add(gtx.Ops)

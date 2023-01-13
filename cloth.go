@@ -36,7 +36,7 @@ func NewCloth(width, height, spacing int, friction float64, col color.NRGBA) *Cl
 
 // Init initializes the cloth where the `posX` and `posY`
 // is the {x, y} position of the cloth's the top-left side.
-func (c *Cloth) Init(posX, posY int) {
+func (c *Cloth) Init(posX, posY int, hud *Hud) {
 	clothX := c.width / c.spacing
 	clothY := c.height / c.spacing
 
@@ -45,7 +45,7 @@ func (c *Cloth) Init(posX, posY int) {
 			px := posX + x*c.spacing
 			py := posY + y*c.spacing
 
-			particle := NewParticle(float64(px), float64(py), c.color)
+			particle := NewParticle(float64(px), float64(py), hud, c.color)
 			particle.friction = c.friction
 
 			// Connect the particles with sticks but skip the particles from the first column and row.
@@ -75,14 +75,14 @@ func (c *Cloth) Init(posX, posY int) {
 // Update is invoked on each frame event of the Gio internal window calls.
 // It updates the cloth particles, which are the basic entities over the
 // cloth constraints are applied and solved using Verlet integration.
-func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
+func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta float64) {
 	dragForce := float32(mouse.getForce() * 0.75)
 	clothColor := color.NRGBA{R: 0x55, A: 0xff}
 	// Convert the RGB color to HSL based on the applied force over the mouse focus area.
 	col := LinearFromSRGB(clothColor).HSLA().Lighten(dragForce).RGBA().SRGB()
 
 	for _, p := range cloth.particles {
-		p.Update(gtx, mouse, delta)
+		p.Update(gtx, mouse, hud, delta)
 	}
 
 	for _, c := range cloth.constraints {
@@ -146,10 +146,10 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, delta float64) {
 }
 
 // Reset resets the cloth to the initial state.
-func (c *Cloth) Reset(startX, startY int) {
+func (c *Cloth) Reset(startX, startY int, hud *Hud) {
 	c.constraints = nil
 	c.particles = nil
 	c.isInitialized = false
 
-	c.Init(startX, startY)
+	c.Init(startX, startY, hud)
 }

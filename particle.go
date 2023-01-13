@@ -11,14 +11,11 @@ import (
 )
 
 const (
-	clothTearDist  = 60
-	clothPinDist   = 4
-	gravityForce   = 600
-	defFocusArea   = 50
-	minFocusArea   = 30
-	maxFocusArea   = 150
-	mouseDragForce = 4.2
-	maxDragForce   = 20
+	clothPinDist = 4
+	defFocusArea = 50
+	minFocusArea = 30
+	maxFocusArea = 150
+	maxDragForce = 20
 )
 
 // Particle holds the basic components of the particle system.
@@ -36,22 +33,25 @@ type Particle struct {
 }
 
 // NewParticle initializes a new Particle.
-func NewParticle(x, y float64, col color.NRGBA) *Particle {
+func NewParticle(x, y float64, hud *Hud, col color.NRGBA) *Particle {
 	p := &Particle{
 		x: x, y: y, px: x, py: y, color: col,
 	}
+	dragForce := float64(hud.sliders[0].widget.Value)
+	elasticity := float64(hud.sliders[2].widget.Value)
+
 	p.isActive = true
 	p.highlighted = false
-	p.elasticity = 30.0
-	p.dragForce = mouseDragForce
+	p.dragForce = dragForce
+	p.elasticity = elasticity
 
 	return p
 }
 
 // Update updates the particle system using the Verlet integration.
-func (p *Particle) Update(gtx layout.Context, mouse *Mouse, delta float64) {
+func (p *Particle) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta float64) {
 	//p.draw(gtx, float32(p.x), float32(p.y), 2)
-	p.update(gtx, mouse, delta)
+	p.update(gtx, mouse, hud, delta)
 }
 
 // draw draws the particle at the {x, y} position with the radius `r`.
@@ -79,8 +79,11 @@ func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 }
 
 // update is an internal method to update the cloth system using Verlet integration.
-func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
+func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64) {
 	p.highlighted = false
+
+	gravityForce := float64(hud.sliders[1].widget.Value)
+	tearDistance := float64(hud.sliders[3].widget.Value)
 
 	if p.pinX {
 		return
@@ -93,7 +96,7 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	dy := p.y - mouse.y
 	dist := math.Sqrt(dx*dx + dy*dy)
 
-	if mouse.getDragging() && dist < clothTearDist {
+	if mouse.getDragging() && dist < float64(tearDistance) {
 		dx := mouse.x - mouse.px
 		dy := mouse.y - mouse.py
 		if dx > p.elasticity {
@@ -141,7 +144,7 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, dt float64) {
 	if mouse.getLeftButton() {
 		p.increaseForce(mouse)
 	} else {
-		p.resetForce()
+		p.resetForce(hud)
 	}
 
 	px, py := p.x, p.y
@@ -186,6 +189,6 @@ func (p *Particle) increaseForce(m *Mouse) {
 }
 
 // resetForce resets the dragging force to the default value.
-func (p *Particle) resetForce() {
-	p.dragForce = mouseDragForce
+func (p *Particle) resetForce(hud *Hud) {
+	p.dragForce = float64(hud.sliders[0].value)
 }
