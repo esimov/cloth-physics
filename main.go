@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -172,7 +171,6 @@ func loop(w *app.Window) error {
 
 					switch ev := ev.(type) {
 					case pointer.Event:
-						fmt.Println(ev.Type)
 						switch ev.Type {
 						case pointer.Scroll:
 							scrollY += unit.Dp(ev.Scroll.Y)
@@ -230,7 +228,9 @@ func loop(w *app.Window) error {
 
 					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 						if showHud {
-							hud.ShowControls(gtx, th, mouse)
+							hud.ShowHideControls(gtx, th, mouse, true)
+						} else {
+							hud.ShowHideControls(gtx, th, mouse, false)
 						}
 						return layout.Dimensions{}
 					}),

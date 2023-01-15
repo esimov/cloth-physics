@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"time"
 
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
@@ -27,6 +28,7 @@ type Hud struct {
 	debug   widget.Bool
 	reset   widget.Clickable
 	sliders map[int]*slider
+	easing  *Easing
 }
 
 type slider struct {
@@ -38,6 +40,7 @@ type slider struct {
 	max    float32
 }
 
+// NewHud creates a new HUD used to interactively change the default settings via sliders and checkboxes.
 func NewHud(width, height int) *Hud {
 	h := Hud{
 		width:   width,
@@ -55,13 +58,16 @@ func NewHud(width, height int) *Hud {
 	for idx, s := range sliders {
 		h.addSlider(idx, s)
 	}
+
+	easing := &Easing{duration: 600 * time.Millisecond}
 	h.debug = widget.Bool{}
 	h.debug.Value = false
+	h.easing = easing
 
 	return &h
 }
 
-// Add adds a new widget type.
+// Add adds a new widget to the list of HUD elements.
 func (h *Hud) addSlider(index int, s slider) {
 	h.list.Axis = layout.Vertical
 	s.widget = &widget.Float{}
@@ -69,7 +75,10 @@ func (h *Hud) addSlider(index int, s slider) {
 	h.sliders[index] = &s
 }
 
-func (h *Hud) ShowControls(gtx layout.Context, th *material.Theme, m *Mouse) {
+// ShowHideControls is responsible for showing or hiding the HUD control elements.
+// After hovering the mouse over the bottom part of the window a certain amount of time
+// it shows the HUD control by invoking an easing function.
+func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
 	for _, s := range h.sliders {
 		if s.widget.Changed() {
 			//fmt.Println(s.title, ":", s.widget.Value)
@@ -83,14 +92,16 @@ func (h *Hud) ShowControls(gtx layout.Context, th *material.Theme, m *Mouse) {
 		}
 	}
 
+	progress := h.easing.Update(gtx, isActive)
+	pos := h.easing.InOutBack(progress) * float64(h.height)
+
 	r := image.Rectangle{
 		Max: image.Point{
 			X: gtx.Constraints.Max.X,
-			Y: h.height,
+			Y: int(pos),
 		},
 	}
-
-	op.Offset(image.Pt(0, gtx.Constraints.Max.Y-h.height)).Add(gtx.Ops)
+	op.Offset(image.Pt(0, gtx.Constraints.Max.Y-int(pos))).Add(gtx.Ops)
 	layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 127}, clip.Op(clip.Rect(r).Op()))
