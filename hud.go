@@ -49,8 +49,8 @@ func NewHud(width, height int) *Hud {
 	}
 
 	sliders := []slider{
-		{title: "Drag force", min: 10, value: 20, max: 40},
-		{title: "Gravity force", min: 400, value: 600, max: 1000},
+		{title: "Drag force", min: 2, value: 5, max: 25},
+		{title: "Gravity force", min: 200, value: 400, max: 1000},
 		{title: "Elasticity", min: 10, value: 30, max: 50},
 		{title: "Tear distance", min: 10, value: 60, max: 100},
 	}

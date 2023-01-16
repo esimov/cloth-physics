@@ -227,6 +227,19 @@ func loop(w *app.Window) error {
 					}),
 
 					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+						if hud.debug.Value {
+							layout.Stack{}.Layout(gtx,
+								layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+									op.Offset(image.Pt(10, 10)).Add(gtx.Ops)
+									return layout.E.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+										m := material.Label(th, unit.Sp(15), hrtime.Since(start).String())
+										m.Color = defaultColor
+										return m.Layout(gtx)
+									})
+								}),
+							)
+						}
+
 						if showHud {
 							hud.ShowHideControls(gtx, th, mouse, true)
 						} else {
@@ -235,19 +248,6 @@ func loop(w *app.Window) error {
 						return layout.Dimensions{}
 					}),
 				)
-
-				if hud.debug.Value {
-					layout.Stack{}.Layout(gtx,
-						layout.Stacked(func(gtx layout.Context) layout.Dimensions {
-							op.Offset(image.Pt(10, 10)).Add(gtx.Ops)
-							return layout.E.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-								m := material.Label(th, unit.Sp(15), hrtime.Since(start).String())
-								m.Color = defaultColor
-								return m.Layout(gtx)
-							})
-						}),
-					)
-				}
 
 				op.InvalidateOp{}.Add(gtx.Ops)
 				e.Frame(gtx.Ops)
