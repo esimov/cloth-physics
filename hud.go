@@ -131,6 +131,14 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 				path.Begin(gtx.Ops)
 				path.MoveTo(f32.Pt(10, 10))
 				path.LineTo(f32.Pt(float32(h.closeBtn)-10, float32(h.closeBtn)-10))
+				path.Close()
+
+				paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
+					Path:  path.End(),
+					Width: 5,
+				}.Op())
+
+				path.Begin(gtx.Ops)
 				path.MoveTo(f32.Pt(float32(h.closeBtn)-10, 10))
 				path.LineTo(f32.Pt(10, float32(h.closeBtn)-10))
 				path.Close()
