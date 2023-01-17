@@ -62,11 +62,8 @@ func loop(w *app.Window) error {
 	var (
 		ops       op.Ops
 		initTime  time.Time
-		hudTime   time.Time
 		deltaTime time.Duration
 		scrollY   unit.Dp
-		mouseY    float32
-		showHud   bool
 	)
 	if profile != "" {
 		defer pprof.StopCPUProfile()
@@ -79,7 +76,7 @@ func loop(w *app.Window) error {
 	th.Palette.ContrastBg = defaultColor
 	th.FingerSize = 15
 
-	hud := NewHud(windowWidth, 200)
+	hud := NewHud(windowWidth, 235)
 
 	mouse := &Mouse{maxScrollY: unit.Dp(200)}
 	isDragging := false
@@ -97,17 +94,6 @@ func loop(w *app.Window) error {
 			case system.FrameEvent:
 				start := hrtime.Now()
 				gtx := layout.NewContext(&ops, e)
-
-				isInsideHud := func() bool {
-					if int(mouseY) > gtx.Constraints.Max.Y-hud.height {
-						return true
-					}
-					return false
-				}
-
-				if showHud && !isInsideHud() {
-					showHud = false
-				}
 
 				if profile != "" {
 					pprof.StartCPUProfile(f)
@@ -147,11 +133,6 @@ func loop(w *app.Window) error {
 					mouse.increaseForce(deltaTime.Seconds())
 				}
 
-				hudDeltaTime := time.Now().Sub(hudTime).Seconds()
-				if hudDeltaTime > 0.5 && int(mouseY) > gtx.Constraints.Max.Y-50 {
-					showHud = true
-				}
-
 				for _, ev := range gtx.Queue.Events(w) {
 					if e, ok := ev.(key.Event); ok {
 						if e.State == key.Press {
@@ -183,9 +164,6 @@ func loop(w *app.Window) error {
 						case pointer.Move:
 							pos := mouse.getCurrentPosition(ev)
 							mouse.updatePosition(float64(pos.X), float64(pos.Y))
-							if !showHud {
-								hudTime = time.Now()
-							}
 						case pointer.Press:
 							if ev.Modifiers == key.ModCtrl {
 								mouse.setCtrlDown(true)
@@ -213,8 +191,6 @@ func loop(w *app.Window) error {
 							mouse.setRightButton()
 							pos := mouse.getCurrentPosition(ev)
 							mouse.updatePosition(float64(pos.X), float64(pos.Y))
-						default:
-							mouseY = mouse.getCurrentPosition(ev).Y
 						}
 					}
 				}
@@ -240,9 +216,11 @@ func loop(w *app.Window) error {
 							)
 						}
 
-						if showHud {
+						if hud.isActive {
 							hud.ShowHideControls(gtx, th, mouse, true)
+							hud.DrawCtrlBtn(gtx, th, mouse, true)
 						} else {
+							hud.DrawCtrlBtn(gtx, th, mouse, false)
 							hud.ShowHideControls(gtx, th, mouse, false)
 						}
 						return layout.Dimensions{}

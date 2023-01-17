@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
 	"time"
 
+	"gioui.org/f32"
+	"gioui.org/gesture"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -16,19 +19,28 @@ import (
 	"gioui.org/widget/material"
 )
 
+const maxIconBorderWidth = unit.Dp(4)
+
 type (
 	D = layout.Dimensions
 	C = layout.Context
 )
 
 type Hud struct {
-	width   int
-	height  int
-	list    layout.List
-	debug   widget.Bool
-	reset   widget.Clickable
-	sliders map[int]*slider
-	easing  *Easing
+	width     int
+	height    int
+	btnSize   int
+	closeBtn  int
+	isActive  bool
+	list      layout.List
+	debug     widget.Bool
+	activator gesture.Click
+	closer    gesture.Click
+	controls  gesture.Hover
+	reset     widget.Clickable
+	sliders   map[int]*slider
+	slide     *Easing
+	hover     *Easing
 }
 
 type slider struct {
@@ -59,10 +71,15 @@ func NewHud(width, height int) *Hud {
 		h.addSlider(idx, s)
 	}
 
-	easing := &Easing{duration: 600 * time.Millisecond}
+	slide := &Easing{duration: 600 * time.Millisecond}
+	hover := &Easing{duration: 300 * time.Millisecond}
+
 	h.debug = widget.Bool{}
 	h.debug.Value = false
-	h.easing = easing
+	h.slide = slide
+	h.hover = hover
+	h.btnSize = 50
+	h.closeBtn = 40
 
 	return &h
 }
@@ -86,14 +103,13 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 	}
 
 	if h.reset.Pressed() {
-		fmt.Println("pressed")
 		for _, s := range h.sliders {
 			s.widget.Value = s.value
 		}
 	}
 
-	progress := h.easing.Update(gtx, isActive)
-	pos := h.easing.InOutBack(progress) * float64(h.height)
+	progress := h.slide.Update(gtx, isActive)
+	pos := h.slide.InOutBack(progress) * float64(h.height)
 
 	r := image.Rectangle{
 		Max: image.Point{
@@ -101,8 +117,52 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 			Y: int(pos),
 		},
 	}
-	op.Offset(image.Pt(0, gtx.Constraints.Max.Y-int(pos))).Add(gtx.Ops)
+	op.Offset(image.Pt(0, gtx.Constraints.Max.Y+h.closeBtn-int(pos))).Add(gtx.Ops)
+
 	layout.Stack{}.Layout(gtx,
+		layout.Stacked(func(gtx C) D {
+			op.Offset(image.Pt(5, -h.closeBtn)).Add(gtx.Ops)
+			paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff},
+				clip.Rect{Max: image.Pt(h.closeBtn, h.closeBtn)}.Op(),
+			)
+
+			var path clip.Path
+			{ // Draw the close button.
+				path.Begin(gtx.Ops)
+				path.MoveTo(f32.Pt(10, 10))
+				path.LineTo(f32.Pt(float32(h.closeBtn)-10, float32(h.closeBtn)-10))
+				path.MoveTo(f32.Pt(float32(h.closeBtn)-10, 10))
+				path.LineTo(f32.Pt(10, float32(h.closeBtn)-10))
+				path.Close()
+
+				paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
+					Path:  path.End(),
+					Width: 5,
+				}.Op())
+			}
+
+			defer clip.Stroke{
+				Path: clip.UniformRRect(
+					image.Rectangle{Max: image.Pt(h.closeBtn, h.closeBtn)}, 0,
+				).Path(gtx.Ops),
+				Width: 0.3,
+			}.Op().Push(gtx.Ops).Pop()
+
+			paint.ColorOp{Color: th.ContrastBg}.Add(gtx.Ops)
+			paint.PaintOp{}.Add(gtx.Ops)
+
+			pointer.CursorPointer.Add(gtx.Ops)
+			h.closer.Add(gtx.Ops)
+
+			for _, e := range h.closer.Events(gtx) {
+				if e.Type == gesture.ClickType(pointer.Press) {
+					h.isActive = false
+					break
+				}
+			}
+
+			return layout.Dimensions{}
+		}),
 		layout.Expanded(func(gtx C) D {
 			paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 127}, clip.Op(clip.Rect(r).Op()))
 			stack := clip.Rect(r).Push(gtx.Ops)
@@ -110,6 +170,10 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 				Tag:   stack,
 				Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release,
 			}.Add(gtx.Ops)
+
+			pointer.CursorPointer.Add(gtx.Ops)
+			h.controls.Add(gtx.Ops)
+
 			return layout.Dimensions{Size: r.Max}
 		}),
 		layout.Stacked(func(gtx C) D {
@@ -151,6 +215,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 			})
 		}),
 	)
+
 	op.Offset(image.Pt(gtx.Dp(unit.Dp(h.width/3)), 0)).Add(gtx.Ops)
 	layout.Stack{}.Layout(gtx,
 		layout.Stacked(func(gtx C) D {
@@ -167,6 +232,77 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 				return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 					layout.Rigid(material.Button(th, &h.reset, "Reset").Layout),
 				)
+			})
+		}),
+	)
+}
+
+func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) layout.Dimensions {
+	op.Offset(image.Pt(0, gtx.Constraints.Max.Y-80)).Add(gtx.Ops)
+
+	return layout.Stack{}.Layout(gtx,
+		layout.Stacked(func(gtx C) D {
+			return layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
+				for _, e := range h.activator.Events(gtx) {
+					if e.Type == gesture.ClickType(pointer.Press) {
+						h.isActive = true
+						break
+					}
+				}
+
+				progress := h.hover.Update(gtx, isActive || h.activator.Hovered())
+				width := h.hover.InOutBack(progress) * float64(maxIconBorderWidth)
+
+				var path clip.Path
+
+				spacing := h.btnSize / 4
+				startX := h.btnSize/2 - spacing
+				for i := 0; i < 3; i++ {
+					{ // Draw Line
+						func(x, y float32) {
+							path.Begin(gtx.Ops)
+							path.MoveTo(f32.Pt(float32(startX+(spacing*i)), 10))
+							path.LineTo(f32.Pt(float32(startX+(spacing*i)), float32(h.btnSize)-10))
+							path.Close()
+
+							paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
+								Path:  path.End(),
+								Width: 3,
+							}.Op())
+						}(float32(startX+(spacing*i)), 10)
+					}
+					{ // Draw Circle
+						func(x, y, r float32) {
+							orig := f32.Pt(x-r, y)
+							sq := math.Sqrt(float64(r*r) - float64(r*r))
+							p1 := f32.Pt(x+float32(sq), y).Sub(orig)
+							p2 := f32.Pt(x-float32(sq), y).Sub(orig)
+
+							path.Begin(gtx.Ops)
+							path.Move(orig)
+							path.Arc(p1, p2, 2*math.Pi)
+							path.Close()
+
+							paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
+								Path:  path.End(),
+								Width: 5,
+							}.Op())
+						}(float32(startX+(spacing*i)), float32(15+spacing*i), 4)
+					}
+				}
+
+				defer clip.Stroke{
+					Path:  clip.UniformRRect(image.Rectangle{Max: image.Pt(h.btnSize, h.btnSize)}, gtx.Dp(10)).Path(gtx.Ops),
+					Width: 0.5 + float32(width),
+				}.Op().Push(gtx.Ops).Pop()
+
+				pointer.CursorPointer.Add(gtx.Ops)
+				h.activator.Add(gtx.Ops)
+
+				paint.ColorOp{Color: color.NRGBA{R: 0xd9, G: 0x03, B: 0x68, A: 0xff}}.Add(gtx.Ops)
+				paint.PaintOp{}.Add(gtx.Ops)
+
+				return layout.Dimensions{}
 			})
 		}),
 	)
