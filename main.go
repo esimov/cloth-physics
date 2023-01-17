@@ -16,6 +16,7 @@ import (
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
@@ -85,6 +86,8 @@ func loop(w *app.Window) error {
 	var clothH int = windowHeight * 0.4
 	cloth := NewCloth(clothW, clothH, 8, 0.99, defaultColor)
 
+	var keyTag struct{}
+
 	for {
 		select {
 		case e := <-w.Events():
@@ -108,23 +111,8 @@ func loop(w *app.Window) error {
 					cloth.Init(startX, startY, hud)
 				}
 
-				pointer.InputOp{
-					Tag:   w,
-					Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Type(pointer.ButtonPrimary) | pointer.Type(pointer.ButtonSecondary),
-					ScrollBounds: image.Rectangle{
-						Min: image.Point{
-							X: 0,
-							Y: -30,
-						},
-						Max: image.Point{
-							X: 0,
-							Y: 30,
-						},
-					},
-				}.Add(gtx.Ops)
-
 				key.InputOp{
-					Tag:  w,
+					Tag:  &keyTag,
 					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace,
 				}.Add(gtx.Ops)
 
@@ -133,7 +121,7 @@ func loop(w *app.Window) error {
 					mouse.increaseForce(deltaTime.Seconds())
 				}
 
-				for _, ev := range gtx.Queue.Events(w) {
+				for _, ev := range gtx.Queue.Events(&keyTag) {
 					if e, ok := ev.(key.Event); ok {
 						if e.State == key.Press {
 							if e.Name == key.NameSpace {
@@ -149,55 +137,78 @@ func loop(w *app.Window) error {
 							w.Perform(system.ActionClose)
 						}
 					}
-
-					switch ev := ev.(type) {
-					case pointer.Event:
-						switch ev.Type {
-						case pointer.Scroll:
-							scrollY += unit.Dp(ev.Scroll.Y)
-							if scrollY < 0 {
-								scrollY = 0
-							} else if scrollY > mouse.maxScrollY {
-								scrollY = mouse.maxScrollY
-							}
-							mouse.setScrollY(scrollY)
-						case pointer.Move:
-							pos := mouse.getCurrentPosition(ev)
-							mouse.updatePosition(float64(pos.X), float64(pos.Y))
-						case pointer.Press:
-							if ev.Modifiers == key.ModCtrl {
-								mouse.setCtrlDown(true)
-							}
-							mouse.setLeftButton()
-							initTime = time.Now()
-						case pointer.Release:
-							isDragging = false
-
-							mouse.resetForce()
-							mouse.releaseLeftButton()
-							mouse.releaseRightButton()
-							mouse.setDragging(isDragging)
-							mouse.setCtrlDown(false)
-						case pointer.Drag:
-							isDragging = true
-						}
-						switch ev.Buttons {
-						case pointer.ButtonPrimary:
-							mouse.setLeftButton()
-							pos := mouse.getCurrentPosition(ev)
-							mouse.updatePosition(float64(pos.X), float64(pos.Y))
-							mouse.setDragging(isDragging)
-						case pointer.ButtonSecondary:
-							mouse.setRightButton()
-							pos := mouse.getCurrentPosition(ev)
-							mouse.updatePosition(float64(pos.X), float64(pos.Y))
-						}
-					}
 				}
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
 
 				layout.Stack{}.Layout(gtx,
 					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+						// Push a new clip area here so that we can attach a pointer input handler.
+						// We listen for these canvas interactions here because we don't want to make
+						// this input area the root of the input tree. If it's the root, it will receive
+						// copies of all pointer input from its children, and we don't want that.
+						defer clip.Rect{Max: gtx.Constraints.Max}.Push(gtx.Ops).Pop()
+						// Add a pointer listener for all of the events that affect the cloth.
+						pointer.InputOp{
+							Tag:   w,
+							Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Type(pointer.ButtonPrimary) | pointer.Type(pointer.ButtonSecondary),
+							ScrollBounds: image.Rectangle{
+								Min: image.Point{
+									X: 0,
+									Y: -30,
+								},
+								Max: image.Point{
+									X: 0,
+									Y: 30,
+								},
+							},
+						}.Add(gtx.Ops)
+						// Process pointer events from previous frame.
+						for _, ev := range gtx.Queue.Events(w) {
+							switch ev := ev.(type) {
+							case pointer.Event:
+								switch ev.Type {
+								case pointer.Scroll:
+									scrollY += unit.Dp(ev.Scroll.Y)
+									if scrollY < 0 {
+										scrollY = 0
+									} else if scrollY > mouse.maxScrollY {
+										scrollY = mouse.maxScrollY
+									}
+									mouse.setScrollY(scrollY)
+								case pointer.Move:
+									pos := mouse.getCurrentPosition(ev)
+									mouse.updatePosition(float64(pos.X), float64(pos.Y))
+								case pointer.Press:
+									if ev.Modifiers == key.ModCtrl {
+										mouse.setCtrlDown(true)
+									}
+									mouse.setLeftButton()
+									initTime = time.Now()
+								case pointer.Release:
+									isDragging = false
+
+									mouse.resetForce()
+									mouse.releaseLeftButton()
+									mouse.releaseRightButton()
+									mouse.setDragging(isDragging)
+									mouse.setCtrlDown(false)
+								case pointer.Drag:
+									isDragging = true
+								}
+								switch ev.Buttons {
+								case pointer.ButtonPrimary:
+									mouse.setLeftButton()
+									pos := mouse.getCurrentPosition(ev)
+									mouse.updatePosition(float64(pos.X), float64(pos.Y))
+									mouse.setDragging(isDragging)
+								case pointer.ButtonSecondary:
+									mouse.setRightButton()
+									pos := mouse.getCurrentPosition(ev)
+									mouse.updatePosition(float64(pos.X), float64(pos.Y))
+								}
+							}
+						}
+
 						cloth.Update(gtx, mouse, hud, 0.015)
 						return layout.Dimensions{}
 					}),
