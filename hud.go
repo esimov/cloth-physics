@@ -96,12 +96,6 @@ func (h *Hud) addSlider(index int, s slider) {
 // After hovering the mouse over the bottom part of the window a certain amount of time
 // it shows the HUD control by invoking an easing function.
 func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
-	for _, s := range h.sliders {
-		if s.widget.Changed() {
-			//fmt.Println(s.title, ":", s.widget.Value)
-		}
-	}
-
 	if h.reset.Pressed() {
 		for _, s := range h.sliders {
 			s.widget.Value = s.value
@@ -111,33 +105,43 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 	progress := h.slide.Update(gtx, isActive)
 	pos := h.slide.InOutBack(progress) * float64(h.height)
 
-	r := image.Rectangle{
-		Max: image.Point{
-			X: gtx.Constraints.Max.X,
-			Y: int(pos),
-		},
-	}
 	// This offset will apply to the rest of the content laid out in this function.
 	defer op.Offset(image.Pt(0, gtx.Constraints.Max.Y+h.closeBtn-int(pos))).Push(gtx.Ops).Pop()
 
-	// My attempt to replicate the previous "border", but I find it imperceptible on my monitor.
-	// I may have failed to capture the original intent of the code here.
-	paint.FillShape(gtx.Ops, color.NRGBA{A: 20}, clip.Rect{
-		Max: image.Point{gtx.Constraints.Max.X, gtx.Dp(1)},
-	}.Op())
+	{ // Draw HUD main surface area
+		var path clip.Path
+		path.Begin(gtx.Ops)
+		path.MoveTo(f32.Pt(0, 0))
+		path.LineTo(f32.Pt(float32(gtx.Constraints.Max.X), 0))
+		paint.FillShape(gtx.Ops, color.NRGBA{A: 20}, clip.Stroke{
+			Path:  path.End(),
+			Width: gtx.Metric.PxPerDp,
+		}.Op())
 
-	/* Draw close button */
+		paint.FillShape(gtx.Ops, color.NRGBA{A: 20}, clip.Rect{
+			Max: image.Point{gtx.Constraints.Max.X, gtx.Dp(1)},
+		}.Op())
+	}
 
 	// Push this offset, but prepare to pop it after the button is drawn.
-	closeOffStack := op.Offset(image.Pt(5, -h.closeBtn)).Push(gtx.Ops)
+	closeOffStack := op.Offset(image.Pt(10, -h.closeBtn)).Push(gtx.Ops)
 	paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff},
 		clip.Rect{Max: image.Pt(h.closeBtn, h.closeBtn)}.Op(),
 	)
-	var path clip.Path
-	{
+
+	{ // Draw close button
+		var path clip.Path
 		path.Begin(gtx.Ops)
 		path.MoveTo(f32.Pt(10, 10))
 		path.LineTo(f32.Pt(float32(h.closeBtn)-10, float32(h.closeBtn)-10))
+		path.Close()
+
+		paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
+			Path:  path.End(),
+			Width: 5,
+		}.Op())
+
+		path.Begin(gtx.Ops)
 		path.MoveTo(f32.Pt(float32(h.closeBtn)-10, 10))
 		path.LineTo(f32.Pt(10, float32(h.closeBtn)-10))
 		path.Close()
@@ -169,7 +173,13 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 	// Pop button-specific offset.
 	closeOffStack.Pop()
 
-	/* Draw HUD Surface */
+	r := image.Rectangle{
+		Max: image.Point{
+			X: gtx.Constraints.Max.X,
+			Y: int(pos),
+		},
+	}
+
 	surfaceStack := clip.Rect(r).Push(gtx.Ops)
 	paint.Fill(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 127})
 	pointer.InputOp{
@@ -189,7 +199,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			gtx.Constraints.Min.X = sectionWidth
 			gtx.Constraints.Max.X = sectionWidth
-			return layout.UniformInset(unit.Dp(5)).Layout(gtx, func(gtx C) D {
+			return layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
 				return h.list.Layout(gtx, len(h.sliders),
 					func(gtx C, index int) D {
 						if slider, ok := h.sliders[index]; ok {
@@ -203,8 +213,6 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 			})
 		}),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			gtx.Constraints.Min.X = sectionWidth
-			gtx.Constraints.Max.X = sectionWidth
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(5)).Layout(gtx, material.CheckBox(th, &h.debug, "Show Frame Rates").Layout)
@@ -217,10 +225,12 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 	)
 }
 
-func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) layout.Dimensions {
-	op.Offset(image.Pt(0, gtx.Constraints.Max.Y-80)).Add(gtx.Ops)
+func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
+	progress := h.slide.Update(gtx, isActive)
+	pos := h.slide.InOutBack(progress) * float64(h.height)
 
-	return layout.Stack{}.Layout(gtx,
+	offStack := op.Offset(image.Pt(0, gtx.Constraints.Max.Y-80+int(pos))).Push(gtx.Ops)
+	layout.Stack{}.Layout(gtx,
 		layout.Stacked(func(gtx C) D {
 			return layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
 				for _, e := range h.activator.Events(gtx) {
@@ -286,4 +296,5 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 			})
 		}),
 	)
+	offStack.Pop()
 }
