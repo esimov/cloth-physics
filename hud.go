@@ -117,102 +117,82 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 			Y: int(pos),
 		},
 	}
-	op.Offset(image.Pt(0, gtx.Constraints.Max.Y+h.closeBtn-int(pos))).Add(gtx.Ops)
+	// This offset will apply to the rest of the content laid out in this function.
+	defer op.Offset(image.Pt(0, gtx.Constraints.Max.Y+h.closeBtn-int(pos))).Push(gtx.Ops).Pop()
 
-	layout.Stack{}.Layout(gtx,
-		layout.Stacked(func(gtx C) D {
-			op.Offset(image.Pt(5, -h.closeBtn)).Add(gtx.Ops)
-			paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff},
-				clip.Rect{Max: image.Pt(h.closeBtn, h.closeBtn)}.Op(),
-			)
+	// My attempt to replicate the previous "border", but I find it imperceptible on my monitor.
+	// I may have failed to capture the original intent of the code here.
+	paint.FillShape(gtx.Ops, color.NRGBA{A: 20}, clip.Rect{
+		Max: image.Point{gtx.Constraints.Max.X, gtx.Dp(1)},
+	}.Op())
 
-			var path clip.Path
-			{ // Draw the close button.
-				path.Begin(gtx.Ops)
-				path.MoveTo(f32.Pt(10, 10))
-				path.LineTo(f32.Pt(float32(h.closeBtn)-10, float32(h.closeBtn)-10))
-				path.Close()
+	/* Draw close button */
 
-				paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
-					Path:  path.End(),
-					Width: 5,
-				}.Op())
+	// Push this offset, but prepare to pop it after the button is drawn.
+	closeOffStack := op.Offset(image.Pt(5, -h.closeBtn)).Push(gtx.Ops)
+	paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff},
+		clip.Rect{Max: image.Pt(h.closeBtn, h.closeBtn)}.Op(),
+	)
+	var path clip.Path
+	{
+		path.Begin(gtx.Ops)
+		path.MoveTo(f32.Pt(10, 10))
+		path.LineTo(f32.Pt(float32(h.closeBtn)-10, float32(h.closeBtn)-10))
+		path.MoveTo(f32.Pt(float32(h.closeBtn)-10, 10))
+		path.LineTo(f32.Pt(10, float32(h.closeBtn)-10))
+		path.Close()
 
-				path.Begin(gtx.Ops)
-				path.MoveTo(f32.Pt(float32(h.closeBtn)-10, 10))
-				path.LineTo(f32.Pt(10, float32(h.closeBtn)-10))
-				path.Close()
+		paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
+			Path:  path.End(),
+			Width: 5,
+		}.Op())
+	}
 
-				paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
-					Path:  path.End(),
-					Width: 5,
-				}.Op())
-			}
+	buttonArea := clip.UniformRRect(
+		image.Rectangle{Max: image.Pt(h.closeBtn, h.closeBtn)}, 0,
+	)
+	paint.FillShape(gtx.Ops, th.ContrastBg, clip.Stroke{
+		Path:  buttonArea.Path(gtx.Ops),
+		Width: 0.3,
+	}.Op())
+	buttonStack := buttonArea.Push(gtx.Ops)
+	pointer.CursorPointer.Add(gtx.Ops)
+	h.closer.Add(gtx.Ops)
+	buttonStack.Pop()
 
-			defer clip.Stroke{
-				Path: clip.UniformRRect(
-					image.Rectangle{Max: image.Pt(h.closeBtn, h.closeBtn)}, 0,
-				).Path(gtx.Ops),
-				Width: 0.3,
-			}.Op().Push(gtx.Ops).Pop()
+	for _, e := range h.closer.Events(gtx) {
+		if e.Type == gesture.ClickType(pointer.Press) {
+			h.isActive = false
+			break
+		}
+	}
+	// Pop button-specific offset.
+	closeOffStack.Pop()
 
-			paint.ColorOp{Color: th.ContrastBg}.Add(gtx.Ops)
-			paint.PaintOp{}.Add(gtx.Ops)
+	/* Draw HUD Surface */
+	surfaceStack := clip.Rect(r).Push(gtx.Ops)
+	paint.Fill(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 127})
+	pointer.InputOp{
+		Tag:   0,
+		Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release,
+	}.Add(gtx.Ops)
+	h.controls.Add(gtx.Ops)
 
-			pointer.CursorPointer.Add(gtx.Ops)
-			h.closer.Add(gtx.Ops)
+	pointer.CursorPointer.Add(gtx.Ops)
+	surfaceStack.Pop()
 
-			for _, e := range h.closer.Events(gtx) {
-				if e.Type == gesture.ClickType(pointer.Press) {
-					h.isActive = false
-					break
-				}
-			}
-
-			return layout.Dimensions{}
-		}),
-		layout.Expanded(func(gtx C) D {
-			paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 127}, clip.Op(clip.Rect(r).Op()))
-			stack := clip.Rect(r).Push(gtx.Ops)
-			pointer.InputOp{
-				Tag:   stack,
-				Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release,
-			}.Add(gtx.Ops)
-
-			pointer.CursorPointer.Add(gtx.Ops)
-			h.controls.Add(gtx.Ops)
-
-			return layout.Dimensions{Size: r.Max}
-		}),
-		layout.Stacked(func(gtx C) D {
-			border := image.Rectangle{
-				Max: image.Point{
-					X: gtx.Constraints.Max.X,
-					Y: gtx.Dp(unit.Dp(0.5)),
-				},
-			}
-			paint.FillShape(gtx.Ops, color.NRGBA{A: 0x20}, clip.Rect(border).Op())
-			return layout.Dimensions{Size: r.Max}
-		}),
-		layout.Stacked(func(gtx C) D {
-			border := image.Rectangle{
-				Max: image.Point{
-					X: gtx.Constraints.Max.X,
-					Y: gtx.Dp(unit.Dp(0.5)),
-				},
-			}
-			paint.FillShape(gtx.Ops, color.NRGBA{A: 0x10}, clip.Rect(border).Op())
-			return layout.Dimensions{Size: r.Max}
-		}),
-		layout.Stacked(func(gtx C) D {
+	/* Draw HUD Contents */
+	sectionWidth := gtx.Dp(unit.Dp(h.width / 3))
+	layout.Flex{
+		Spacing: layout.SpaceEnd,
+	}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			gtx.Constraints.Min.X = sectionWidth
+			gtx.Constraints.Max.X = sectionWidth
 			return layout.UniformInset(unit.Dp(5)).Layout(gtx, func(gtx C) D {
 				return h.list.Layout(gtx, len(h.sliders),
 					func(gtx C, index int) D {
 						if slider, ok := h.sliders[index]; ok {
-							gtx.Constraints.Min.X = gtx.Dp(unit.Dp(h.width / 3))
-							if gtx.Constraints.Min.X > gtx.Constraints.Max.X {
-								gtx.Constraints.Min.X = gtx.Constraints.Max.X
-							}
 							return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 								layout.Rigid(material.Body1(th, fmt.Sprintf("%s: %.0f", slider.title, slider.widget.Value)).Layout),
 								layout.Flexed(1, material.Slider(th, slider.widget, slider.min, slider.max).Layout),
@@ -222,25 +202,17 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 					})
 			})
 		}),
-	)
-
-	op.Offset(image.Pt(gtx.Dp(unit.Dp(h.width/3)), 0)).Add(gtx.Ops)
-	layout.Stack{}.Layout(gtx,
-		layout.Stacked(func(gtx C) D {
-			return layout.UniformInset(unit.Dp(5)).Layout(gtx, func(gtx C) D {
-				return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-					layout.Rigid(material.CheckBox(th, &h.debug, "Show Frame Rates").Layout),
-				)
-			})
-		}),
-
-		layout.Stacked(func(gtx C) D {
-			return layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
-				op.Offset(image.Pt(0, 80)).Add(gtx.Ops)
-				return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-					layout.Rigid(material.Button(th, &h.reset, "Reset").Layout),
-				)
-			})
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			gtx.Constraints.Min.X = sectionWidth
+			gtx.Constraints.Max.X = sectionWidth
+			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(5)).Layout(gtx, material.CheckBox(th, &h.debug, "Show Frame Rates").Layout)
+				}),
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(10)).Layout(gtx, material.Button(th, &h.reset, "Reset").Layout)
+				}),
+			)
 		}),
 	)
 }
