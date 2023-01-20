@@ -41,6 +41,7 @@ type Hud struct {
 	sliders   map[int]*slider
 	slide     *Easing
 	hover     *Easing
+	hudTag    struct{}
 }
 
 type slider struct {
@@ -62,9 +63,9 @@ func NewHud(width, height int) *Hud {
 
 	sliders := []slider{
 		{title: "Drag force", min: 2, value: 5, max: 25},
-		{title: "Gravity force", min: 200, value: 400, max: 1000},
+		{title: "Gravity force", min: 100, value: 250, max: 500},
 		{title: "Elasticity", min: 10, value: 30, max: 50},
-		{title: "Tear distance", min: 10, value: 60, max: 100},
+		{title: "Tear distance", min: 5, value: 50, max: 80},
 	}
 
 	for idx, s := range sliders {
@@ -180,16 +181,15 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 		},
 	}
 
-	surfaceStack := clip.Rect(r).Push(gtx.Ops)
+	defer clip.Rect(r).Push(gtx.Ops).Pop()
 	paint.Fill(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 127})
 	pointer.InputOp{
-		Tag:   0,
-		Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release,
+		Tag:   &h.hudTag,
+		Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Leave,
 	}.Add(gtx.Ops)
 	h.controls.Add(gtx.Ops)
 
 	pointer.CursorPointer.Add(gtx.Ops)
-	surfaceStack.Pop()
 
 	/* Draw HUD Contents */
 	sectionWidth := gtx.Dp(unit.Dp(h.width / 3))
@@ -225,6 +225,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 	)
 }
 
+// DrawCtrlBtn draws the button which activates the main HUD area with the sliders.
 func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
 	progress := h.slide.Update(gtx, isActive)
 	pos := h.slide.InOutBack(progress) * float64(h.height)

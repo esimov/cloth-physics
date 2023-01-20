@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gioui.org/app"
+	"gioui.org/f32"
 	"gioui.org/font/gofont"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
@@ -64,8 +65,11 @@ func loop(w *app.Window) error {
 		ops       op.Ops
 		initTime  time.Time
 		deltaTime time.Duration
+		panelInit time.Time
 		scrollY   unit.Dp
+		mousePos  f32.Point
 	)
+
 	if profile != "" {
 		defer pprof.StopCPUProfile()
 	}
@@ -97,6 +101,17 @@ func loop(w *app.Window) error {
 			case system.FrameEvent:
 				start := hrtime.Now()
 				gtx := layout.NewContext(&ops, e)
+
+				if hud.isActive {
+					dt := time.Now().Sub(panelInit).Seconds()
+					panelTop := gtx.Constraints.Max.Y - hud.height
+
+					if !panelInit.IsZero() && dt > 3 && mousePos.Y < float32(panelTop) {
+						hud.isActive = false
+					}
+				} else {
+					panelInit = time.Time{}
+				}
 
 				if profile != "" {
 					pprof.StartCPUProfile(f)
@@ -162,10 +177,15 @@ func loop(w *app.Window) error {
 								},
 							},
 						}.Add(gtx.Ops)
+
 						// Process pointer events from previous frame.
 						for _, ev := range gtx.Queue.Events(w) {
 							switch ev := ev.(type) {
 							case pointer.Event:
+								// We should reset the key focus back to the cloth canvas each time a mouse pointer
+								// activity is detected. This is required because if the checkbox or reset button is
+								// activated on the slider panel, the focus will be hold on them indefinitely.
+								key.FocusOp{Tag: keyTag}.Add(gtx.Ops)
 								switch ev.Type {
 								case pointer.Scroll:
 									scrollY += unit.Dp(ev.Scroll.Y)
@@ -176,6 +196,7 @@ func loop(w *app.Window) error {
 									}
 									mouse.setScrollY(scrollY)
 								case pointer.Move:
+									mousePos = ev.Position
 									pos := mouse.getCurrentPosition(ev)
 									mouse.updatePosition(float64(pos.X), float64(pos.Y))
 								case pointer.Press:
@@ -209,7 +230,7 @@ func loop(w *app.Window) error {
 							}
 						}
 
-						cloth.Update(gtx, mouse, hud, 0.015)
+						cloth.Update(gtx, mouse, hud, 0.022)
 						return layout.Dimensions{}
 					}),
 
@@ -228,12 +249,24 @@ func loop(w *app.Window) error {
 						}
 
 						if hud.isActive {
+							for _, ev := range gtx.Queue.Events(&hud.hudTag) {
+								switch ev := ev.(type) {
+								case pointer.Event:
+									if ev.Type == pointer.Leave {
+										if panelInit.IsZero() {
+											panelInit = time.Now()
+										}
+									}
+								}
+							}
+
 							hud.ShowHideControls(gtx, th, mouse, true)
 							hud.DrawCtrlBtn(gtx, th, mouse, true)
 						} else {
 							hud.DrawCtrlBtn(gtx, th, mouse, false)
 							hud.ShowHideControls(gtx, th, mouse, false)
 						}
+
 						return layout.Dimensions{}
 					}),
 				)

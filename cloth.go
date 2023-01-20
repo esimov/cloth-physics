@@ -35,7 +35,7 @@ func NewCloth(width, height, spacing int, friction float64, col color.NRGBA) *Cl
 }
 
 // Init initializes the cloth where the `posX` and `posY`
-// is the {x, y} position of the cloth's the top-left side.
+// are the {x, y} position of the cloth's the top-left side.
 func (c *Cloth) Init(posX, posY int, hud *Hud) {
 	clothX := c.width / c.spacing
 	clothY := c.height / c.spacing
