@@ -14,12 +14,14 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
+	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 )
 
 const maxIconBorderWidth = unit.Dp(4)
+const Version = "v1.0.1"
 
 type (
 	D = layout.Dimensions
@@ -219,6 +221,21 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 				}),
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(10)).Layout(gtx, material.Button(th, &h.reset, "Reset").Layout)
+				}),
+			)
+		}),
+
+		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+			w := material.Body1(th, fmt.Sprintf("2D Cloth Simulation %s\nCopyright © 2023, Endre Simo", Version))
+			w.Alignment = text.End
+			w.Color = th.ContrastBg
+			w.TextSize = 10
+			txtOffs := h.height - (3 * h.closeBtn)
+
+			defer op.Offset(image.Point{Y: txtOffs}).Push(gtx.Ops).Pop()
+			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(10)).Layout(gtx, w.Layout)
 				}),
 			)
 		}),
