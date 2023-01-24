@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"gioui.org/app"
-	"gioui.org/f32"
 	"gioui.org/font/gofont"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
@@ -28,6 +27,7 @@ import (
 const (
 	windowWidth  = 940
 	windowHeight = 580
+	hudTimeout   = 2.5
 )
 
 var (
@@ -67,7 +67,6 @@ func loop(w *app.Window) error {
 		deltaTime time.Duration
 		panelInit time.Time
 		scrollY   unit.Dp
-		mousePos  f32.Point
 	)
 
 	if profile != "" {
@@ -103,11 +102,11 @@ func loop(w *app.Window) error {
 				gtx := layout.NewContext(&ops, e)
 
 				if hud.isActive {
-					dt := time.Now().Sub(panelInit).Seconds()
-					panelTop := gtx.Constraints.Max.Y - hud.height
-
-					if !panelInit.IsZero() && dt > 3 && mousePos.Y < float32(panelTop) {
-						hud.isActive = false
+					if !panelInit.IsZero() {
+						dt := time.Now().Sub(panelInit).Seconds()
+						if dt > hudTimeout {
+							hud.isActive = false
+						}
 					}
 				} else {
 					panelInit = time.Time{}
@@ -196,7 +195,6 @@ func loop(w *app.Window) error {
 									}
 									mouse.setScrollY(scrollY)
 								case pointer.Move:
-									mousePos = ev.Position
 									pos := mouse.getCurrentPosition(ev)
 									mouse.updatePosition(float64(pos.X), float64(pos.Y))
 								case pointer.Press:
@@ -252,10 +250,13 @@ func loop(w *app.Window) error {
 							for _, ev := range gtx.Queue.Events(&hud.hudTag) {
 								switch ev := ev.(type) {
 								case pointer.Event:
-									if ev.Type == pointer.Leave {
+									switch ev.Type {
+									case pointer.Leave:
 										if panelInit.IsZero() {
 											panelInit = time.Now()
 										}
+									case pointer.Move:
+										panelInit = time.Time{}
 									}
 								}
 							}
