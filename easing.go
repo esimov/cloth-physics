@@ -8,9 +8,9 @@ import (
 
 // Easing
 type Easing struct {
+	initTime time.Time
 	duration time.Duration
 	delta    time.Duration
-	initTime time.Time
 }
 
 // Progress calculates the time passed from the first invocation of the time.Now function.

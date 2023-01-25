@@ -20,7 +20,7 @@ import (
 	"gioui.org/widget/material"
 )
 
-const maxIconBorderWidth = unit.Dp(4)
+const maxIconBorderWidth = unit.Dp(5)
 const Version = "v1.0.1"
 
 type (
@@ -29,27 +29,27 @@ type (
 )
 
 type Hud struct {
-	width     int
-	height    int
-	btnSize   int
-	closeBtn  int
-	isActive  bool
-	list      layout.List
-	debug     widget.Bool
 	activator gesture.Click
-	closer    gesture.Click
-	controls  gesture.Hover
 	reset     widget.Clickable
+	controls  gesture.Hover
+	closer    gesture.Click
+	hudTag    struct{}
 	sliders   map[int]*slider
 	slide     *Easing
 	hover     *Easing
-	hudTag    struct{}
+	list      layout.List
+	closeBtn  int
+	btnSize   int
+	height    int
+	width     int
+	debug     widget.Bool
+	isActive  bool
 }
 
 type slider struct {
 	widget *widget.Float
-	index  int
 	title  string
+	index  int
 	min    float32
 	value  float32
 	max    float32
@@ -64,10 +64,10 @@ func NewHud(width, height int) *Hud {
 	}
 
 	sliders := []slider{
-		{title: "Drag force", min: 2, value: 5, max: 25},
+		{title: "Drag force", min: 2, value: 4, max: 25},
 		{title: "Gravity force", min: 100, value: 250, max: 500},
 		{title: "Elasticity", min: 10, value: 30, max: 50},
-		{title: "Tear distance", min: 5, value: 50, max: 80},
+		{title: "Tear distance", min: 5, value: 20, max: 80},
 	}
 
 	for idx, s := range sliders {

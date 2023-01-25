@@ -10,15 +10,13 @@ import (
 )
 
 type Cloth struct {
-	width    int
-	height   int
-	spacing  int
-	friction float64
-	color    color.NRGBA
-
-	particles   []*Particle
-	constraints []*Constraint
-
+	constraints   []*Constraint
+	particles     []*Particle
+	height        int
+	spacing       int
+	friction      float64
+	width         int
+	color         color.NRGBA
 	isInitialized bool
 }
 
