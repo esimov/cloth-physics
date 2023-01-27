@@ -87,7 +87,7 @@ func loop(w *app.Window) error {
 
 	var clothW int = windowWidth * 1.3
 	var clothH int = windowHeight * 0.4
-	cloth := NewCloth(clothW, clothH, 8, 0.99, defaultColor)
+	cloth := NewCloth(clothW, clothH, 8, 0.995, defaultColor)
 
 	var keyTag struct{}
 

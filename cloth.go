@@ -93,24 +93,34 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 	path.Begin(gtx.Ops)
 
 	// For performance reasons we draw the sticks as a single clip path instead of multiple clips paths.
-	// The performance improvement is considerable compared to the multiple clip paths rendered separately.
+	// The performance improvement is considerable compared of drawing each clip path separately.
 	for _, c := range cloth.constraints {
-		if c.p1.isActive {
-			// We are using `clip.Outline` instead of `clip.Stroke` for performance reasons.
-			// But we need to draw the full outline of the stroke.
+		if c.p1.isActive && c.p2.isActive {
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x+1), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p1.x+1), float32(c.p1.y)))
-
-			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y+1)))
-			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y+1)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{X: 1}))
+			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{X: 1}))
 			path.Close()
 		}
 	}
+	// We are using `clip.Outline` instead of `clip.Stroke`, because the performance gains
+	// are much better, but we need to draw the full outline of the stroke.
+	paint.FillShape(gtx.Ops, cloth.color, clip.Outline{
+		Path: path.End(),
+	}.Op())
 
+	path.Begin(gtx.Ops)
+	for _, c := range cloth.constraints {
+		if c.p1.isActive && c.p2.isActive {
+
+			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{Y: 1}))
+			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{Y: 1}))
+			path.Close()
+
+		}
+	}
 	paint.FillShape(gtx.Ops, cloth.color, clip.Outline{
 		Path: path.End(),
 	}.Op())
@@ -121,20 +131,26 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 	for _, c := range cloth.constraints {
 		if (c.p1.isActive && c.p1.highlighted) &&
 			(c.p2.isActive && c.p2.highlighted) {
-			path.Begin(gtx.Ops)
 
+			c.color = color.NRGBA{R: col.R, A: col.A}
+
+			path.Begin(gtx.Ops)
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x+1), float32(c.p2.y)))
 			path.LineTo(f32.Pt(float32(c.p1.x+1), float32(c.p1.y)))
+			path.Close()
 
+			paint.FillShape(gtx.Ops, c.color, clip.Outline{
+				Path: path.End(),
+			}.Op())
+
+			path.Begin(gtx.Ops)
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y+1)))
 			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y+1)))
 			path.Close()
-
-			c.color = color.NRGBA{R: col.R, A: col.A}
 
 			paint.FillShape(gtx.Ops, c.color, clip.Outline{
 				Path: path.End(),
