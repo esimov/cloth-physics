@@ -98,8 +98,8 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 		if c.p1.isActive && c.p2.isActive {
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{X: 1.3}))
-			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{X: 1.3}))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{X: 1.2}))
+			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{X: 1.2}))
 			path.Close()
 		}
 	}
@@ -115,8 +115,8 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{Y: 1.3}))
-			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{Y: 1.3}))
+			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{Y: 1.2}))
+			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{Y: 1.2}))
 			path.Close()
 
 		}
@@ -141,11 +141,6 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{X: 1}))
 			path.Close()
 
-			paint.FillShape(gtx.Ops, c.color, clip.Outline{
-				Path: path.End(),
-			}.Op())
-
-			path.Begin(gtx.Ops)
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{Y: 1}))

@@ -85,7 +85,7 @@ func loop(w *app.Window) error {
 	mouse := &Mouse{maxScrollY: unit.Dp(200)}
 	isDragging := false
 
-	var clothW int = windowWidth * 1.3
+	var clothW int = windowWidth * 1.4
 	var clothH int = windowHeight * 0.4
 	cloth := NewCloth(clothW, clothH, 8, 0.995, defaultColor)
 

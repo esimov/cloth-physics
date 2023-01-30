@@ -162,6 +162,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 		Path:  buttonArea.Path(gtx.Ops),
 		Width: 0.3,
 	}.Op())
+
 	buttonStack := buttonArea.Push(gtx.Ops)
 	pointer.CursorPointer.Add(gtx.Ops)
 	h.closer.Add(gtx.Ops)
@@ -301,7 +302,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 
 				defer clip.Stroke{
 					Path:  clip.UniformRRect(image.Rectangle{Max: image.Pt(h.btnSize, h.btnSize)}, gtx.Dp(10)).Path(gtx.Ops),
-					Width: 0.5 + float32(width),
+					Width: 1.5 + float32(width),
 				}.Op().Push(gtx.Ops).Pop()
 
 				pointer.CursorPointer.Add(gtx.Ops)
