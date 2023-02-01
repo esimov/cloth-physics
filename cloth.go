@@ -12,10 +12,10 @@ import (
 type Cloth struct {
 	constraints   []*Constraint
 	particles     []*Particle
+	width         int
 	height        int
 	spacing       int
 	friction      float64
-	width         int
 	color         color.NRGBA
 	isInitialized bool
 }
@@ -84,7 +84,7 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 	}
 
 	for _, c := range cloth.constraints {
-		if c.p1.isActive {
+		if c.p1.isActive && c.p2.isActive {
 			c.Update(gtx, cloth, mouse)
 		}
 	}
@@ -112,7 +112,6 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 	path.Begin(gtx.Ops)
 	for _, c := range cloth.constraints {
 		if c.p1.isActive && c.p2.isActive {
-
 			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
 			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{Y: 1.2}))

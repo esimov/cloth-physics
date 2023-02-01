@@ -150,7 +150,6 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64
 	px, py := p.x, p.y
 	p.vy += gravityForce
 
-	// velocity = acceleration * deltaTime
 	// position = velocity * deltaTime
 	posX, posY := p.vx*(dt*dt), p.vy*(dt*dt)
 
