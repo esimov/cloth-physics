@@ -3,13 +3,15 @@
 [![License](https://img.shields.io/github/license/esimov/cloth-physics)](./LICENSE)
 [![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/esimov/cloth-physics/releases/tag/v0.1.0)
 
-**cloth-physics** is a native desktop application for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration). It's written in [Gio](https://gioui.org), a GUI framework for [Go](https://golang.org/).
+**cloth-physics** is a native desktop application for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration). It's written in [Gio](https://gioui.org), a GUI framework for [Go](https://golang.org/). 
 
 It has the following characteristics:
 - [x] Possibility to tear up the cloth by applying a mouse pressure on the cloth structure. You can increase the mouse dragging force by pressing and holding the left mouse button. The mouse focus area will change its color depending on the applied force.
 - [x] Possibility to make up a hole in the cloth structure by pressing the right mouse button.
 - [x] You can change the mouse cloth interaction area by using the scroll button.
 - [x] With <kbd>CTRL-left</kbd> click you can pin up the cloth stick under the mouse position.
+
+**Note:** In case you want to learn more about the details of how it was implemented, there is a detailed article I wrote here: https://medium.com/@esimov/2d-cloth-simulation-in-go-using-gio-gui-b3dfe00b7223.
 
 <p align="center"><img src="./cloth-sim.gif"/></p>
 
