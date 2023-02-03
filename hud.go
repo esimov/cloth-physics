@@ -38,10 +38,10 @@ type Hud struct {
 	slide     *Easing
 	hover     *Easing
 	list      layout.List
+	width     int
+	height    int
 	closeBtn  int
 	btnSize   int
-	height    int
-	width     int
 	debug     widget.Bool
 	isActive  bool
 }
@@ -56,12 +56,8 @@ type slider struct {
 }
 
 // NewHud creates a new HUD used to interactively change the default settings via sliders and checkboxes.
-func NewHud(width, height int) *Hud {
-	h := Hud{
-		width:   width,
-		height:  height,
-		sliders: make(map[int]*slider),
-	}
+func NewHud() *Hud {
+	h := Hud{sliders: make(map[int]*slider)}
 
 	sliders := []slider{
 		{title: "Drag force", min: 2, value: 4, max: 25},
@@ -81,8 +77,6 @@ func NewHud(width, height int) *Hud {
 	h.debug.Value = false
 	h.slide = slide
 	h.hover = hover
-	h.btnSize = 50
-	h.closeBtn = 40
 
 	return &h
 }
@@ -202,7 +196,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			gtx.Constraints.Min.X = sectionWidth
 			gtx.Constraints.Max.X = sectionWidth
-			return layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
+			layout := layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
 				return h.list.Layout(gtx, len(h.sliders),
 					func(gtx C, index int) D {
 						if slider, ok := h.sliders[index]; ok {
@@ -214,6 +208,8 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 						return D{}
 					})
 			})
+			h.height = layout.Size.Y + h.closeBtn
+			return layout
 		}),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
@@ -247,8 +243,9 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
 	progress := h.slide.Update(gtx, isActive)
 	pos := h.slide.InOutBack(progress) * float64(h.height)
+	offset := gtx.Dp(60)
 
-	offStack := op.Offset(image.Pt(0, gtx.Constraints.Max.Y-80+int(pos))).Push(gtx.Ops)
+	offStack := op.Offset(image.Pt(0, gtx.Constraints.Max.Y-offset+int(pos))).Push(gtx.Ops)
 	layout.Stack{}.Layout(gtx,
 		layout.Stacked(func(gtx C) D {
 			return layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
@@ -301,7 +298,9 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 				}
 
 				defer clip.Stroke{
-					Path:  clip.UniformRRect(image.Rectangle{Max: image.Pt(h.btnSize, h.btnSize)}, gtx.Dp(10)).Path(gtx.Ops),
+					Path: clip.UniformRRect(image.Rectangle{
+						Max: image.Pt(h.btnSize, h.btnSize),
+					}, gtx.Dp(10)).Path(gtx.Ops),
 					Width: 1.5 + float32(width),
 				}.Op().Push(gtx.Ops).Pop()
 

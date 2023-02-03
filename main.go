@@ -80,14 +80,13 @@ func loop(w *app.Window) error {
 	th.Palette.ContrastBg = defaultColor
 	th.FingerSize = 15
 
-	hud := NewHud(windowWidth, 240)
-
 	mouse := &Mouse{maxScrollY: unit.Dp(200)}
 	isDragging := false
 
 	var clothW int = windowWidth * 1.3
 	var clothH int = windowHeight * 0.4
 	cloth := NewCloth(clothW, clothH, 8, 0.99, defaultColor)
+	hud := NewHud()
 
 	var keyTag struct{}
 
@@ -100,6 +99,9 @@ func loop(w *app.Window) error {
 			case system.FrameEvent:
 				start := hrtime.Now()
 				gtx := layout.NewContext(&ops, e)
+				hud.width = gtx.Dp(windowWidth)
+				hud.btnSize = gtx.Dp(35)
+				hud.closeBtn = gtx.Dp(25)
 
 				if hud.isActive {
 					if !panelInit.IsZero() {
