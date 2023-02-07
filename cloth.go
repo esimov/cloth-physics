@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"math"
 
 	"gioui.org/f32"
 	"gioui.org/layout"
@@ -89,6 +90,8 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 		}
 	}
 
+	const lineWidth = 0.8
+
 	var path clip.Path
 	path.Begin(gtx.Ops)
 
@@ -96,30 +99,13 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 	// The performance improvement is considerable compared of drawing each clip path separately.
 	for _, c := range cloth.constraints {
 		if c.p1.isActive && c.p2.isActive {
-			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{X: 1.2}))
-			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{X: 1.2}))
-			path.Close()
+			a := f32.Pt(float32(c.p1.x), float32(c.p1.y))
+			b := f32.Pt(float32(c.p2.x), float32(c.p2.y))
+			addSegment(&path, a, b, lineWidth)
 		}
 	}
 	// We are using `clip.Outline` instead of `clip.Stroke`, because the performance gains
 	// are much better, but we need to draw the full outline of the stroke.
-	paint.FillShape(gtx.Ops, cloth.color, clip.Outline{
-		Path: path.End(),
-	}.Op())
-
-	path.Begin(gtx.Ops)
-	for _, c := range cloth.constraints {
-		if c.p1.isActive && c.p2.isActive {
-			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{Y: 1.2}))
-			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{Y: 1.2}))
-			path.Close()
-
-		}
-	}
 	paint.FillShape(gtx.Ops, cloth.color, clip.Outline{
 		Path: path.End(),
 	}.Op())
@@ -134,23 +120,35 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 			c.color = color.NRGBA{R: col.R, A: col.A}
 
 			path.Begin(gtx.Ops)
-			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{X: 1}))
-			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{X: 1}))
-			path.Close()
-
-			path.MoveTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)))
-			path.LineTo(f32.Pt(float32(c.p2.x), float32(c.p2.y)).Add(f32.Point{Y: 1}))
-			path.LineTo(f32.Pt(float32(c.p1.x), float32(c.p1.y)).Add(f32.Point{Y: 1}))
-			path.Close()
+			a := f32.Pt(float32(c.p1.x), float32(c.p1.y))
+			b := f32.Pt(float32(c.p2.x), float32(c.p2.y))
+			addSegment(&path, a, b, lineWidth)
 
 			paint.FillShape(gtx.Ops, c.color, clip.Outline{
 				Path: path.End(),
 			}.Op())
 		}
 	}
+}
+
+func addSegment(p *clip.Path, a, b f32.Point, w float32) {
+	n := normal(a, b, w)
+	p.MoveTo(a.Add(n))
+	p.LineTo(b.Add(n))
+	p.LineTo(b.Sub(n))
+	p.LineTo(a.Sub(n))
+	p.Close()
+}
+
+// Calculate the scaled normal vector.
+func normal(a, b f32.Point, w float32) f32.Point {
+	dir := b.Sub(a)
+	dir.X, dir.Y = +dir.Y, -dir.X
+	d := math.Hypot(float64(dir.X), float64(dir.Y))
+	if math.Abs(d) < 1e-5 {
+		return f32.Point{}
+	}
+	return dir.Mul(w / float32(d))
 }
 
 // Reset resets the cloth to the initial state.
