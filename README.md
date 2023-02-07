@@ -1,7 +1,7 @@
 # cloth-physics
 [![Build](https://github.com/esimov/cloth-physics/actions/workflows/build.yml/badge.svg)](https://github.com/esimov/cloth-physics/actions/workflows/build.yml)
 [![License](https://img.shields.io/github/license/esimov/cloth-physics)](./LICENSE)
-[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/esimov/cloth-physics/releases/tag/v0.1.0)
+[![Release](https://img.shields.io/badge/release-v1.0.1-blue.svg)](https://github.com/esimov/cloth-physics/releases/tag/v1.0.2)
 
 **cloth-physics** is a native desktop application for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration). It's written in [Gio](https://gioui.org), a GUI framework for [Go](https://golang.org/). 
 
@@ -11,7 +11,7 @@ It has the following characteristics:
 - [x] You can change the mouse cloth interaction area by using the scroll button.
 - [x] With <kbd>CTRL-left</kbd> click you can pin up the cloth stick under the mouse position.
 
-**Note:** In case you want to learn more about the details of how it was implemented, there is a detailed article I wrote here: https://medium.com/@esimov/2d-cloth-simulation-in-go-using-gio-gui-b3dfe00b7223.
+**Note:** In case you want to learn more about the implementation details, here is a detailed article I wrote: https://medium.com/@esimov/2d-cloth-simulation-in-go-using-gio-gui-b3dfe00b7223.
 
 <p align="center"><img src="./cloth-sim.gif"/></p>
 
