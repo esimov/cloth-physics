@@ -43,11 +43,11 @@ $ cloth-physics -h
 ```
 
 ## Supported key bindings:
-* <kbd>SPACE</kbd> - Reset the cloth to the default values
-* <kbd>RIGHT CLICK</kbd> - Make a hole in the cloth structure
+* <kbd>SPACE</kbd> - Redraw the cloth
+* <kbd>RIGHT CLICK</kbd> - Make a hole in the cloth structure under the mouse position
 * <kbd>SCROLL</kbd> - Increase/decrease the mouse focus area
-* <kbd>CTRL+CLICK</kbd> - Pin up a cloth stick
-* <kbd>LEFT CLICK+HOLD</kbd> - Increase the mouse pressure
+* <kbd>CTRL+CLICK</kbd> - Pin up the cloth on the mouse position
+* <kbd>LEFT CLICK+HOLD</kbd> - Increase the mouse dragging pressure
 
 ## Author
 * Endre Simo ([@simo_endre](https://twitter.com/simo_endre))
