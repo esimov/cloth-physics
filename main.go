@@ -52,6 +52,7 @@ func main() {
 			app.Title("Gio - 2D Cloth Simulation"),
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
+		w.Perform(system.ActionCenter)
 		if err := loop(w); err != nil {
 			log.Fatal(err)
 		}
