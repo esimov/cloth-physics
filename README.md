@@ -1,7 +1,7 @@
 # cloth-physics
 [![Build](https://github.com/esimov/cloth-physics/actions/workflows/build.yml/badge.svg)](https://github.com/esimov/cloth-physics/actions/workflows/build.yml)
 [![License](https://img.shields.io/github/license/esimov/cloth-physics)](./LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.1-blue.svg)](https://github.com/esimov/cloth-physics/releases/tag/v1.0.2)
+[![Release](https://img.shields.io/badge/release-v1.0.2-blue.svg)](https://github.com/esimov/cloth-physics/releases/tag/v1.0.2)
 
 **cloth-physics** is a native desktop application for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration). It's written in [Gio](https://gioui.org), a GUI framework for [Go](https://golang.org/). 
 
@@ -30,7 +30,7 @@ $ go build ./...
 $ cloth-physics
 ```
 
-If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/cloth-physics/packages) page.
+If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/cloth-physics/packages) page. For convenience if you wish to try the application on a mobile device the **`.apk`** file is also provided in the same packages page.
 
 #### Debugging:
 ```bash
@@ -43,11 +43,11 @@ $ cloth-physics -h
 ```
 
 ## Supported key bindings:
-* <kbd>SPACE</kbd> - Reset the cloth to the default values
-* <kbd>RIGHT CLICK</kbd> - Make a hole in the cloth structure
+* <kbd>SPACE</kbd> - Redraw the cloth
+* <kbd>RIGHT CLICK</kbd> - Make a hole in the cloth structure under the mouse position
 * <kbd>SCROLL</kbd> - Increase/decrease the mouse focus area
-* <kbd>CTRL+CLICK</kbd> - Pin up a cloth stick
-* <kbd>LEFT CLICK+HOLD</kbd> - Increase the mouse pressure
+* <kbd>CTRL+CLICK</kbd> - Pin up the cloth on the mouse position
+* <kbd>LEFT CLICK+HOLD</kbd> - Increase the mouse dragging pressure
 
 ## Author
 * Endre Simo ([@simo_endre](https://twitter.com/simo_endre))
