@@ -131,6 +131,15 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta flo
 	}
 }
 
+// Reset resets the cloth to the initial state.
+func (c *Cloth) Reset(startX, startY int, hud *Hud) {
+	c.constraints = nil
+	c.particles = nil
+	c.isInitialized = false
+
+	c.Init(startX, startY, hud)
+}
+
 func addSegment(p *clip.Path, a, b f32.Point, w float32) {
 	n := normal(a, b, w)
 	p.MoveTo(a.Add(n))
@@ -149,13 +158,4 @@ func normal(a, b f32.Point, w float32) f32.Point {
 		return f32.Point{}
 	}
 	return dir.Mul(w / float32(d))
-}
-
-// Reset resets the cloth to the initial state.
-func (c *Cloth) Reset(startX, startY int, hud *Hud) {
-	c.constraints = nil
-	c.particles = nil
-	c.isInitialized = false
-
-	c.Init(startX, startY, hud)
 }
