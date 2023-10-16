@@ -137,7 +137,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 
 		paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 			Path:  path.End(),
-			Width: float32(gtx.Dp(unit.Dp(4))),
+			Width: float32(unit.Dp(4)),
 		}.Op())
 	}
 
@@ -218,7 +218,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 			w := material.Body1(th, fmt.Sprintf("2D Cloth Simulation %s\nCopyright © 2023, Endre Simo", Version))
 			w.Alignment = text.End
 			w.Color = th.ContrastBg
-			w.TextSize = 14
+			w.TextSize = 12
 			txtOffs := h.height - (3 * h.closeBtn)
 
 			defer op.Offset(image.Point{Y: txtOffs}).Push(gtx.Ops).Pop()
@@ -253,8 +253,8 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 
 				var path clip.Path
 
-				offset := float32(gtx.Dp(unit.Dp(10)))
-				btnSize := float32(gtx.Dp(unit.Dp(h.btnSize)))
+				offset := float32(unit.Dp(10))
+				btnSize := float32(unit.Dp(h.btnSize))
 				spacing := btnSize / 4
 				startX := btnSize/2 - spacing
 
@@ -269,7 +269,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 
 							paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 								Path:  path.End(),
-								Width: float32(gtx.Dp(unit.Dp(3))),
+								Width: float32(unit.Dp(4)),
 							}.Op())
 						}(startX+(spacing*i), offset)
 					}
@@ -288,7 +288,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 							defer clip.Outline{Path: path.End()}.Op().Push(gtx.Ops).Pop()
 							paint.ColorOp{Color: color.NRGBA{A: 0xff}}.Add(gtx.Ops)
 							paint.PaintOp{}.Add(gtx.Ops)
-						}(startX+(spacing*i), offset+(spacing*i), 5)
+						}(startX+(spacing*i), offset+(spacing*i), float32(unit.Dp(6)))
 					}
 				}
 
