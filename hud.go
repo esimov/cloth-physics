@@ -20,8 +20,7 @@ import (
 	"gioui.org/widget/material"
 )
 
-const maxIconBorderWidth = unit.Dp(5)
-const Version = "v1.0.2"
+const Version = "v1.0.3"
 
 type (
 	D = layout.Dimensions
@@ -71,7 +70,7 @@ func NewHud() *Hud {
 	}
 
 	slide := &Easing{duration: 600 * time.Millisecond}
-	hover := &Easing{duration: 300 * time.Millisecond}
+	hover := &Easing{duration: 700 * time.Millisecond}
 
 	h.debug = widget.Bool{}
 	h.debug.Value = false
@@ -127,16 +126,18 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 	)
 
 	{ // Draw close button
+		offset := float32(gtx.Dp(unit.Dp(20)))
+
 		var path clip.Path
 		path.Begin(gtx.Ops)
-		path.MoveTo(f32.Pt(10, 10))
-		path.LineTo(f32.Pt(float32(h.closeBtn)-10, float32(h.closeBtn)-10))
-		path.MoveTo(f32.Pt(float32(h.closeBtn)-10, 10))
-		path.LineTo(f32.Pt(10, float32(h.closeBtn)-10))
+		path.MoveTo(f32.Pt(offset, offset))
+		path.LineTo(f32.Pt(float32(h.closeBtn)-offset, float32(h.closeBtn)-offset))
+		path.MoveTo(f32.Pt(float32(h.closeBtn)-offset, offset))
+		path.LineTo(f32.Pt(offset, float32(h.closeBtn)-offset))
 
 		paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 			Path:  path.End(),
-			Width: 5,
+			Width: float32(gtx.Dp(unit.Dp(4))),
 		}.Op())
 	}
 
@@ -217,7 +218,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 			w := material.Body1(th, fmt.Sprintf("2D Cloth Simulation %s\nCopyright © 2023, Endre Simo", Version))
 			w.Alignment = text.End
 			w.Color = th.ContrastBg
-			w.TextSize = 10
+			w.TextSize = 14
 			txtOffs := h.height - (3 * h.closeBtn)
 
 			defer op.Offset(image.Point{Y: txtOffs}).Push(gtx.Ops).Pop()
@@ -234,7 +235,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
 	progress := h.slide.Update(gtx, isActive)
 	pos := h.slide.InOutBack(progress) * float64(h.height)
-	offset := gtx.Dp(55)
+	offset := gtx.Dp(unit.Dp(60))
 
 	offStack := op.Offset(image.Pt(0, gtx.Constraints.Max.Y-offset+int(pos))).Push(gtx.Ops)
 	layout.Stack{}.Layout(gtx,
@@ -248,25 +249,29 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 				}
 
 				progress := h.hover.Update(gtx, isActive || h.activator.Hovered())
-				width := h.hover.InOutBack(progress) * float64(maxIconBorderWidth)
+				width := h.hover.InOutBack(progress) * float64(unit.Dp(2))
 
 				var path clip.Path
 
-				spacing := h.btnSize / 4
-				startX := h.btnSize/2 - spacing
-				for i := 0; i < 3; i++ {
+				offset := float32(gtx.Dp(unit.Dp(10)))
+				btnSize := float32(gtx.Dp(unit.Dp(h.btnSize)))
+				spacing := btnSize / 4
+				startX := btnSize/2 - spacing
+
+				// HUD controls button
+				for i := float32(0); i < 3; i++ {
 					{ // Draw Line
 						func(x, y float32) {
 							path.Begin(gtx.Ops)
-							path.MoveTo(f32.Pt(float32(startX+(spacing*i)), 10))
-							path.LineTo(f32.Pt(float32(startX+(spacing*i)), float32(h.btnSize)-10))
+							path.MoveTo(f32.Pt(x, offset))
+							path.LineTo(f32.Pt(x, btnSize-offset))
 							path.Close()
 
 							paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 								Path:  path.End(),
-								Width: 3,
+								Width: float32(gtx.Dp(unit.Dp(3))),
 							}.Op())
-						}(float32(startX+(spacing*i)), 10)
+						}(startX+(spacing*i), offset)
 					}
 					{ // Draw Circle
 						func(x, y, r float32) {
@@ -280,11 +285,10 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 							path.Arc(p1, p2, 2*math.Pi)
 							path.Close()
 
-							paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
-								Path:  path.End(),
-								Width: 5,
-							}.Op())
-						}(float32(startX+(spacing*i)), float32(15+spacing*i), 4)
+							defer clip.Outline{Path: path.End()}.Op().Push(gtx.Ops).Pop()
+							paint.ColorOp{Color: color.NRGBA{A: 0xff}}.Add(gtx.Ops)
+							paint.PaintOp{}.Add(gtx.Ops)
+						}(startX+(spacing*i), offset+(spacing*i), 5)
 					}
 				}
 

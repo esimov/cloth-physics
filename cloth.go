@@ -74,14 +74,14 @@ func (c *Cloth) Init(posX, posY int, hud *Hud) {
 // Update is invoked on each frame event of the Gio internal window calls.
 // It updates the cloth particles, which are the basic entities over the
 // cloth constraints are applied and solved using Verlet integration.
-func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta float64) {
+func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64) {
 	dragForce := float32(mouse.getForce() * 0.75)
 	clothColor := color.NRGBA{R: 0x55, A: 0xff}
 	// Convert the RGB color to HSL based on the applied force over the mouse focus area.
 	col := LinearFromSRGB(clothColor).HSLA().Lighten(dragForce).RGBA().SRGB()
 
 	for _, p := range cloth.particles {
-		p.Update(gtx, mouse, hud, delta)
+		p.Update(gtx, mouse, hud, dt)
 	}
 
 	for _, c := range cloth.constraints {

@@ -25,12 +25,14 @@ import (
 )
 
 const (
-	windowWidth  = 940
-	windowHeight = 580
-	hudTimeout   = 2.5
+	hudTimeout = 2.5
+	delta      = 0.022
 )
 
 var (
+	windowWidth  = 940
+	windowHeight = 580
+
 	profile string
 	f       *os.File
 	err     error
@@ -53,6 +55,7 @@ func main() {
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
 		w.Perform(system.ActionCenter)
+		w.Perform(system.ActionMaximize)
 		if err := loop(w); err != nil {
 			log.Fatal(err)
 		}
@@ -84,8 +87,9 @@ func loop(w *app.Window) error {
 	mouse := &Mouse{maxScrollY: unit.Dp(200)}
 	isDragging := false
 
-	var clothW int = windowWidth * 1.3
-	var clothH int = windowHeight * 0.4
+	var clothW int = int(float64(windowWidth) * 1.3)
+	var clothH int = int(float64(windowHeight) * 0.4)
+
 	cloth := NewCloth(clothW, clothH, 8, 0.99, defaultColor)
 	hud := NewHud()
 
@@ -101,8 +105,8 @@ func loop(w *app.Window) error {
 				start := hrtime.Now()
 				gtx := layout.NewContext(&ops, e)
 				hud.width = windowWidth
-				hud.btnSize = gtx.Dp(35)
-				hud.closeBtn = gtx.Dp(25)
+				hud.btnSize = gtx.Dp(unit.Dp(40))
+				hud.closeBtn = gtx.Dp(unit.Dp(25))
 
 				if hud.isActive {
 					if !panelInit.IsZero() {
@@ -138,22 +142,33 @@ func loop(w *app.Window) error {
 					mouse.increaseForce(deltaTime.Seconds())
 				}
 
+				resetAnimation := func() {
+					width := gtx.Constraints.Max.X
+					height := gtx.Constraints.Max.Y
+
+					startX := width/2 - clothW/2
+					startY := int(float64(height) * 0.2)
+					cloth.Reset(startX, startY, hud)
+				}
+
 				for _, ev := range gtx.Queue.Events(&keyTag) {
 					if e, ok := ev.(key.Event); ok {
 						if e.State == key.Press {
 							if e.Name == key.NameSpace {
-								width := gtx.Constraints.Max.X
-								height := gtx.Constraints.Max.Y
-
-								startX := width/2 - clothW/2
-								startY := int(float64(height) * 0.2)
-								cloth.Reset(startX, startY, hud)
+								resetAnimation()
 							}
 						}
 						if e.Name == key.NameEscape {
 							w.Perform(system.ActionClose)
 						}
 					}
+				}
+
+				// Reset cloth on window resize.
+				if e.Size.X != windowWidth || e.Size.Y != windowHeight {
+					windowWidth = e.Size.X
+					windowHeight = e.Size.Y
+					resetAnimation()
 				}
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
 
@@ -231,7 +246,7 @@ func loop(w *app.Window) error {
 							}
 						}
 
-						cloth.Update(gtx, mouse, hud, 0.022)
+						cloth.Update(gtx, mouse, hud, delta)
 						return layout.Dimensions{}
 					}),
 
