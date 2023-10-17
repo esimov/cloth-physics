@@ -56,7 +56,7 @@ type slider struct {
 
 // NewHud creates a new HUD used to interactively change the default settings via sliders and checkboxes.
 func NewHud() *Hud {
-	h := Hud{sliders: make(map[int]*slider)}
+	hud := Hud{sliders: make(map[int]*slider)}
 
 	sliders := []slider{
 		{title: "Drag force", min: 2, value: 4, max: 25},
@@ -66,18 +66,18 @@ func NewHud() *Hud {
 	}
 
 	for idx, s := range sliders {
-		h.addSlider(idx, s)
+		hud.addSlider(idx, s)
 	}
 
 	slide := &Easing{duration: 600 * time.Millisecond}
 	hover := &Easing{duration: 700 * time.Millisecond}
 
-	h.debug = widget.Bool{}
-	h.debug.Value = false
-	h.slide = slide
-	h.hover = hover
+	hud.debug = widget.Bool{}
+	hud.debug.Value = false
+	hud.slide = slide
+	hud.hover = hover
 
-	return &h
+	return &hud
 }
 
 // Add adds a new widget to the list of HUD elements.

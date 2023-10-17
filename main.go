@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"gioui.org/app"
-	"gioui.org/font/gofont"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
 	"gioui.org/io/system"
@@ -78,7 +77,7 @@ func loop(w *app.Window) error {
 
 	defaultColor := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 
-	th := material.NewTheme(gofont.Collection())
+	th := material.NewTheme()
 	th.TextSize = unit.Sp(12)
 	th.Palette.ContrastBg = defaultColor
 	th.FingerSize = 15
@@ -141,7 +140,7 @@ func loop(w *app.Window) error {
 					mouse.increaseForce(deltaTime.Seconds())
 				}
 
-				resetAnimation := func() {
+				resetCloth := func() {
 					width := gtx.Constraints.Max.X
 					height := gtx.Constraints.Max.Y
 
@@ -154,7 +153,7 @@ func loop(w *app.Window) error {
 					if e, ok := ev.(key.Event); ok {
 						if e.State == key.Press {
 							if e.Name == key.NameSpace {
-								resetAnimation()
+								resetCloth()
 							}
 						}
 						if e.Name == key.NameEscape {
@@ -167,7 +166,7 @@ func loop(w *app.Window) error {
 				if e.Size.X != windowWidth || e.Size.Y != windowHeight {
 					windowWidth = e.Size.X
 					windowHeight = e.Size.Y
-					resetAnimation()
+					resetCloth()
 				}
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
 
