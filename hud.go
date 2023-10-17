@@ -35,7 +35,7 @@ type Hud struct {
 	hudTag    struct{}
 	sliders   map[int]*slider
 	slide     *Easing
-	hover     *Easing
+	ctrlBtn   *Easing
 	list      layout.List
 	width     int
 	height    int
@@ -75,7 +75,7 @@ func NewHud() *Hud {
 	hud.debug = widget.Bool{}
 	hud.debug.Value = false
 	hud.slide = slide
-	hud.hover = hover
+	hud.ctrlBtn = hover
 
 	return &hud
 }
@@ -88,10 +88,10 @@ func (h *Hud) addSlider(index int, s slider) {
 	h.sliders[index] = &s
 }
 
-// ShowHideControls is responsible for showing or hiding the HUD control elements.
+// ShowHideControlsArea is responsible for showing or hiding the HUD control elements.
 // After hovering the mouse over the bottom part of the window a certain amount of time
 // it shows the HUD control by invoking an easing function.
-func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
+func (h *Hud) ShowHideControlsArea(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
 	if h.reset.Pressed() {
 		for _, s := range h.sliders {
 			s.widget.Value = s.value
@@ -99,7 +99,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 	}
 
 	progress := h.slide.Update(gtx, isActive)
-	pos := h.slide.InOutBack(progress) * float64(h.height)
+	pos := h.slide.Animate(progress) * float64(h.height)
 
 	// This offset will apply to the rest of the content laid out in this function.
 	defer op.Offset(image.Pt(0, gtx.Constraints.Max.Y+h.closeBtn-int(pos))).Push(gtx.Ops).Pop()
@@ -121,12 +121,12 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 
 	// Push this offset, but prepare to pop it after the button is drawn.
 	closeOffStack := op.Offset(image.Pt(10, -h.closeBtn)).Push(gtx.Ops)
-	paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff},
+	paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 170},
 		clip.Rect{Max: image.Pt(h.closeBtn, h.closeBtn)}.Op(),
 	)
 
 	{ // Draw close button
-		offset := float32(gtx.Dp(unit.Dp(20)))
+		offset := float32(gtx.Dp(unit.Dp(16)))
 
 		var path clip.Path
 		path.Begin(gtx.Ops)
@@ -137,7 +137,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 
 		paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 			Path:  path.End(),
-			Width: float32(unit.Dp(4)),
+			Width: float32(unit.Dp(2)),
 		}.Op())
 	}
 
@@ -171,7 +171,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 	}
 
 	defer clip.Rect(r).Push(gtx.Ops).Pop()
-	paint.Fill(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 127})
+	paint.Fill(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 170})
 	pointer.InputOp{
 		Tag:   &h.hudTag,
 		Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Leave,
@@ -234,7 +234,7 @@ func (h *Hud) ShowHideControls(gtx layout.Context, th *material.Theme, m *Mouse,
 // DrawCtrlBtn draws the button which activates the main HUD area with the sliders.
 func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
 	progress := h.slide.Update(gtx, isActive)
-	pos := h.slide.InOutBack(progress) * float64(h.height)
+	pos := h.slide.Animate(progress) * float64(h.height)
 	offset := gtx.Dp(unit.Dp(60))
 
 	offStack := op.Offset(image.Pt(0, gtx.Constraints.Max.Y-offset+int(pos))).Push(gtx.Ops)
@@ -248,13 +248,13 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 					}
 				}
 
-				progress := h.hover.Update(gtx, isActive || h.activator.Hovered())
-				width := h.hover.InOutBack(progress) * float64(unit.Dp(2))
+				progress := h.ctrlBtn.Update(gtx, isActive || h.activator.Hovered())
+				btnWidth := h.ctrlBtn.Animate(progress) * float64(unit.Dp(3))
 
 				var path clip.Path
 
 				offset := float32(unit.Dp(10))
-				btnSize := float32(unit.Dp(h.btnSize))
+				btnSize := float32(h.btnSize)
 				spacing := btnSize / 4
 				startX := btnSize/2 - spacing
 
@@ -296,7 +296,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 					Path: clip.UniformRRect(image.Rectangle{
 						Max: image.Pt(h.btnSize, h.btnSize),
 					}, gtx.Dp(10)).Path(gtx.Ops),
-					Width: 1.5 + float32(width),
+					Width: 1.5 + float32(btnWidth),
 				}.Op().Push(gtx.Ops).Pop()
 
 				pointer.CursorPointer.Add(gtx.Ops)

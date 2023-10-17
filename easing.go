@@ -43,8 +43,8 @@ func (e *Easing) Update(gtx layout.Context, isActive bool) float64 {
 	return e.Progress()
 }
 
-// InOutBack is the easing function used for the HUD position update.
-func (e *Easing) InOutBack(t float64) float64 {
+// Animate applies the In-Out-Back easing formula to a specific event.
+func (e *Easing) Animate(t float64) float64 {
 	s := 1.70158
 	t *= 2
 	if t < 1 {

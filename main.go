@@ -108,7 +108,7 @@ func loop(w *app.Window) error {
 
 				if hud.isActive {
 					if !panelInit.IsZero() {
-						dt := time.Now().Sub(panelInit).Seconds()
+						dt := time.Since(panelInit).Seconds()
 						if dt > hudTimeout {
 							hud.isActive = false
 						}
@@ -136,7 +136,7 @@ func loop(w *app.Window) error {
 				}.Add(gtx.Ops)
 
 				if mouse.getLeftButton() {
-					deltaTime = time.Now().Sub(initTime)
+					deltaTime = time.Since(initTime)
 					mouse.increaseForce(deltaTime.Seconds())
 				}
 
@@ -276,13 +276,9 @@ func loop(w *app.Window) error {
 									}
 								}
 							}
-
-							hud.ShowHideControls(gtx, th, mouse, true)
-							hud.DrawCtrlBtn(gtx, th, mouse, true)
-						} else {
-							hud.DrawCtrlBtn(gtx, th, mouse, false)
-							hud.ShowHideControls(gtx, th, mouse, false)
 						}
+						hud.DrawCtrlBtn(gtx, th, mouse, hud.isActive)
+						hud.ShowHideControlsArea(gtx, th, mouse, hud.isActive)
 
 						return layout.Dimensions{}
 					}),
