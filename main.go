@@ -32,8 +32,15 @@ var (
 	windowWidth  = 940
 	windowHeight = 580
 
+	// Gio Ops related variables
+	ops       op.Ops
+	initTime  time.Time
+	deltaTime time.Duration
+	scrollY   unit.Dp
+
+	// pprof related variables
 	profile string
-	f       *os.File
+	file    *os.File
 	err     error
 )
 
@@ -42,7 +49,7 @@ func main() {
 	flag.Parse()
 
 	if profile != "" {
-		f, err = os.Create(profile)
+		file, err = os.Create(profile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -63,14 +70,6 @@ func main() {
 }
 
 func loop(w *app.Window) error {
-	var (
-		ops       op.Ops
-		initTime  time.Time
-		deltaTime time.Duration
-		panelInit time.Time
-		scrollY   unit.Dp
-	)
-
 	if profile != "" {
 		defer pprof.StopCPUProfile()
 	}
@@ -107,18 +106,18 @@ func loop(w *app.Window) error {
 				hud.closeBtn = gtx.Dp(unit.Dp(25))
 
 				if hud.isActive {
-					if !panelInit.IsZero() {
-						dt := time.Since(panelInit).Seconds()
+					if !hud.panelInit.IsZero() {
+						dt := time.Since(hud.panelInit).Seconds()
 						if dt > hudTimeout {
 							hud.isActive = false
 						}
 					}
 				} else {
-					panelInit = time.Time{}
+					hud.panelInit = time.Time{}
 				}
 
 				if profile != "" {
-					pprof.StartCPUProfile(f)
+					pprof.StartCPUProfile(file)
 				}
 
 				if !cloth.isInitialized {
@@ -268,11 +267,11 @@ func loop(w *app.Window) error {
 								case pointer.Event:
 									switch ev.Type {
 									case pointer.Leave:
-										if panelInit.IsZero() {
-											panelInit = time.Now()
+										if hud.panelInit.IsZero() {
+											hud.panelInit = time.Now()
 										}
 									case pointer.Move:
-										panelInit = time.Time{}
+										hud.panelInit = time.Time{}
 									}
 								}
 							}

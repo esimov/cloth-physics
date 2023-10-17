@@ -28,20 +28,21 @@ type (
 )
 
 type Hud struct {
-	activator gesture.Click
-	reset     widget.Clickable
-	controls  gesture.Hover
-	closer    gesture.Click
 	hudTag    struct{}
+	panelInit time.Time
+	ctrlBtn   *Easing
 	sliders   map[int]*slider
 	slide     *Easing
-	ctrlBtn   *Easing
+	reset     widget.Clickable
+	debug     widget.Bool
 	list      layout.List
+	activator gesture.Click
+	closer    gesture.Click
 	width     int
 	height    int
 	closeBtn  int
 	btnSize   int
-	debug     widget.Bool
+	controls  gesture.Hover
 	isActive  bool
 }
 
@@ -243,13 +244,14 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 			return layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
 				for _, e := range h.activator.Events(gtx) {
 					if e.Type == gesture.ClickType(pointer.Press) {
+						h.panelInit = time.Now()
 						h.isActive = true
 						break
 					}
 				}
 
 				progress := h.ctrlBtn.Update(gtx, isActive || h.activator.Hovered())
-				btnWidth := h.ctrlBtn.Animate(progress) * float64(unit.Dp(3))
+				btnWidth := h.ctrlBtn.Animate(progress) * 2.5
 
 				var path clip.Path
 
@@ -296,7 +298,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 					Path: clip.UniformRRect(image.Rectangle{
 						Max: image.Pt(h.btnSize, h.btnSize),
 					}, gtx.Dp(10)).Path(gtx.Ops),
-					Width: 1.5 + float32(btnWidth),
+					Width: 2.0 + float32(btnWidth),
 				}.Op().Push(gtx.Ops).Pop()
 
 				pointer.CursorPointer.Add(gtx.Ops)
