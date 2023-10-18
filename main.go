@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gioui.org/app"
+	"gioui.org/font/gofont"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
 	"gioui.org/io/system"
@@ -17,6 +18,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
+	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 
@@ -77,6 +79,7 @@ func loop(w *app.Window) error {
 	defaultColor := color.NRGBA{R: 0x9a, G: 0x9a, B: 0x9a, A: 0xff}
 
 	th := material.NewTheme()
+	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
 	th.TextSize = unit.Sp(12)
 	th.Palette.ContrastBg = defaultColor
 	th.FingerSize = 15
