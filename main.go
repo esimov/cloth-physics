@@ -38,7 +38,7 @@ var (
 	ops       op.Ops
 	initTime  time.Time
 	deltaTime time.Duration
-	scrollY   unit.Dp
+	sy        unit.Dp
 
 	// pprof related variables
 	profile string
@@ -84,7 +84,9 @@ func loop(w *app.Window) error {
 	th.Palette.ContrastBg = defaultColor
 	th.FingerSize = 15
 
-	mouse := &Mouse{maxScrollY: unit.Dp(200)}
+	mouse := &Mouse{maxScrollY: unit.Dp(maxFocusArea)}
+	mouse.setScrollY(defFocusArea)
+
 	isDragging := false
 
 	var clothW int = int(float64(windowWidth) * 1.3)
@@ -205,13 +207,13 @@ func loop(w *app.Window) error {
 								key.FocusOp{Tag: keyTag}.Add(gtx.Ops)
 								switch ev.Type {
 								case pointer.Scroll:
-									scrollY += unit.Dp(ev.Scroll.Y)
-									if scrollY < 0 {
-										scrollY = 0
-									} else if scrollY > mouse.maxScrollY {
-										scrollY = mouse.maxScrollY
+									sy += unit.Dp(ev.Scroll.Y)
+									if sy < minFocusArea {
+										sy = minFocusArea
+									} else if sy > mouse.maxScrollY {
+										sy = mouse.maxScrollY
 									}
-									mouse.setScrollY(scrollY)
+									mouse.setScrollY(sy)
 								case pointer.Move:
 									pos := mouse.getCurrentPosition(ev)
 									mouse.updatePosition(float64(pos.X), float64(pos.Y))

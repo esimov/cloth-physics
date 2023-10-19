@@ -13,8 +13,8 @@ import (
 const (
 	clothPinDist = 4
 	defFocusArea = 50
-	minFocusArea = 30
-	maxFocusArea = 150
+	minFocusArea = 20
+	maxFocusArea = 120
 	maxDragForce = 20
 )
 
@@ -121,7 +121,7 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64
 	}
 
 	// Modify the mouse focus area size on scrolling.
-	focusArea := mouse.getScrollY() + defFocusArea
+	focusArea := mouse.getScrollY()
 	if focusArea > maxFocusArea {
 		focusArea = maxFocusArea
 	} else if focusArea < minFocusArea {

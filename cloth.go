@@ -71,9 +71,8 @@ func (c *Cloth) Init(posX, posY int, hud *Hud) {
 	c.isInitialized = true
 }
 
-// Update is invoked on each frame event of the Gio internal window calls.
-// It updates the cloth particles, which are the basic entities over the
-// cloth constraints are applied and solved using Verlet integration.
+// Update updates the cloth particles invoked on each frame event of the Gio internal window calls.
+// The cloth contraints are solved by using the Verlet integration formulas.
 func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64) {
 	dragForce := float32(mouse.getForce() * 0.75)
 	clothColor := color.NRGBA{R: 0x55, A: 0xff}
