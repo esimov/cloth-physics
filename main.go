@@ -35,10 +35,10 @@ var (
 	windowHeight = 580
 
 	// Gio Ops related variables
-	ops       op.Ops
-	initTime  time.Time
-	deltaTime time.Duration
-	sy        unit.Dp
+	ops          op.Ops
+	initTime     time.Time
+	deltaTime    time.Duration
+	mouseScrollY unit.Dp
 
 	// pprof related variables
 	profile string
@@ -62,7 +62,7 @@ func main() {
 			app.Title("Gio - 2D Cloth Simulation"),
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
-		w.Perform(system.ActionMaximize)
+		//w.Perform(system.ActionMaximize)
 		if err := loop(w); err != nil {
 			log.Fatal(err)
 		}
@@ -106,7 +106,7 @@ func loop(w *app.Window) error {
 			case system.FrameEvent:
 				start := hrtime.Now()
 				gtx := layout.NewContext(&ops, e)
-				hud.width = windowWidth
+				hud.panelWidth = windowWidth
 				hud.btnSize = gtx.Dp(unit.Dp(40))
 				hud.closeBtn = gtx.Dp(unit.Dp(25))
 
@@ -136,7 +136,7 @@ func loop(w *app.Window) error {
 
 				key.InputOp{
 					Tag:  &keyTag,
-					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace,
+					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace + "|" + key.NameF1,
 				}.Add(gtx.Ops)
 
 				if mouse.getLeftButton() {
@@ -156,8 +156,11 @@ func loop(w *app.Window) error {
 				for _, ev := range gtx.Queue.Events(&keyTag) {
 					if e, ok := ev.(key.Event); ok {
 						if e.State == key.Press {
-							if e.Name == key.NameSpace {
+							switch e.Name {
+							case key.NameSpace:
 								resetCloth()
+							case key.NameF1:
+								hud.showHelp = !hud.showHelp
 							}
 						}
 						if e.Name == key.NameEscape {
@@ -166,11 +169,24 @@ func loop(w *app.Window) error {
 					}
 				}
 
-				// Reset cloth on window resize.
+				// Reset the window offsets on resize.
+				hud.winOffsetX = 0
+				hud.winOffsetY = 0
+
+				if e.Size.X != windowWidth {
+					hud.winOffsetX = float64(e.Size.X-windowWidth) * 0.5
+				}
+				if e.Size.Y != windowHeight {
+					hud.winOffsetY = float64(e.Size.Y-windowHeight) * 0.25
+				}
+
 				if e.Size.X != windowWidth || e.Size.Y != windowHeight {
+					cloth.Init(windowWidth, windowHeight, hud)
+
 					windowWidth = e.Size.X
 					windowHeight = e.Size.Y
-					resetCloth()
+					cloth.width = windowWidth
+					cloth.height = windowHeight
 				}
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
 
@@ -207,13 +223,13 @@ func loop(w *app.Window) error {
 								key.FocusOp{Tag: keyTag}.Add(gtx.Ops)
 								switch ev.Type {
 								case pointer.Scroll:
-									sy += unit.Dp(ev.Scroll.Y)
-									if sy < minFocusArea {
-										sy = minFocusArea
-									} else if sy > mouse.maxScrollY {
-										sy = mouse.maxScrollY
+									mouseScrollY += unit.Dp(ev.Scroll.Y)
+									if mouseScrollY < minFocusArea {
+										mouseScrollY = minFocusArea
+									} else if mouseScrollY > mouse.maxScrollY {
+										mouseScrollY = mouse.maxScrollY
 									}
-									mouse.setScrollY(sy)
+									mouse.setScrollY(mouseScrollY)
 								case pointer.Move:
 									pos := mouse.getCurrentPosition(ev)
 									mouse.updatePosition(float64(pos.X), float64(pos.Y))
@@ -247,7 +263,6 @@ func loop(w *app.Window) error {
 								}
 							}
 						}
-
 						cloth.Update(gtx, mouse, hud, delta)
 						return layout.Dimensions{}
 					}),
@@ -282,7 +297,7 @@ func loop(w *app.Window) error {
 							}
 						}
 						hud.DrawCtrlBtn(gtx, th, mouse, hud.isActive)
-						hud.ShowHideControlsArea(gtx, th, mouse, hud.isActive)
+						hud.ShowControlPanel(gtx, th, mouse, hud.isActive)
 
 						return layout.Dimensions{}
 					}),

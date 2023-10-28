@@ -39,6 +39,11 @@ func (c *Cloth) Init(posX, posY int, hud *Hud) {
 	clothX := c.width / c.spacing
 	clothY := c.height / c.spacing
 
+	// Skip the cloth initialization when the window is resized.
+	if c.isInitialized {
+		return
+	}
+
 	for y := 0; y <= clothY; y++ {
 		for x := 0; x <= clothX; x++ {
 			px := posX + x*c.spacing

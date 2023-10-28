@@ -28,22 +28,25 @@ type (
 )
 
 type Hud struct {
-	hudTag    struct{}
-	panelInit time.Time
-	ctrlBtn   *Easing
-	sliders   map[int]*slider
-	slide     *Easing
-	reset     widget.Clickable
-	debug     widget.Bool
-	list      layout.List
-	activator gesture.Click
-	closer    gesture.Click
-	width     int
-	height    int
-	closeBtn  int
-	btnSize   int
-	controls  gesture.Hover
-	isActive  bool
+	hudTag      struct{}
+	panelInit   time.Time
+	panelWidth  int
+	panelHeight int
+	winOffsetX  float64 // stores the X offset on window horizontal resize
+	winOffsetY  float64 // stores the Y offset on window vertical resize
+	ctrlBtn     *Easing
+	sliders     map[int]*slider
+	slide       *Easing
+	reset       widget.Clickable
+	debug       widget.Bool
+	list        layout.List
+	activator   gesture.Click
+	closer      gesture.Click
+	closeBtn    int
+	btnSize     int
+	controls    gesture.Hover
+	isActive    bool
+	showHelp    bool
 }
 
 type slider struct {
@@ -89,10 +92,8 @@ func (h *Hud) addSlider(index int, s slider) {
 	h.sliders[index] = &s
 }
 
-// ShowHideControlsArea is responsible for showing or hiding the HUD control elements.
-// After hovering the mouse over the bottom part of the window a certain amount of time
-// it shows the HUD control by invoking an easing function.
-func (h *Hud) ShowHideControlsArea(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
+// ShowControlPanel is responsible for showing or hiding the HUD control elements.
+func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
 	if h.reset.Pressed() {
 		for _, s := range h.sliders {
 			s.widget.Value = s.value
@@ -100,7 +101,7 @@ func (h *Hud) ShowHideControlsArea(gtx layout.Context, th *material.Theme, m *Mo
 	}
 
 	progress := h.slide.Update(gtx, isActive)
-	pos := h.slide.Animate(progress) * float64(h.height)
+	pos := h.slide.Animate(progress) * float64(h.panelHeight)
 
 	// This offset will apply to the rest of the content laid out in this function.
 	defer op.Offset(image.Pt(0, gtx.Constraints.Max.Y+h.closeBtn-int(pos))).Push(gtx.Ops).Pop()
@@ -182,11 +183,11 @@ func (h *Hud) ShowHideControlsArea(gtx layout.Context, th *material.Theme, m *Mo
 	pointer.CursorPointer.Add(gtx.Ops)
 
 	/* Draw HUD Contents */
-	sectionWidth := gtx.Dp(unit.Dp(h.width / 3))
+	sectionWidth := gtx.Dp(unit.Dp(h.panelWidth / 3))
 	layout.Flex{
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+		layout.Rigid(func(gtx C) D {
 			gtx.Constraints.Min.X = sectionWidth
 			gtx.Constraints.Max.X = sectionWidth
 			layout := layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
@@ -201,30 +202,30 @@ func (h *Hud) ShowHideControlsArea(gtx layout.Context, th *material.Theme, m *Mo
 						return D{}
 					})
 			})
-			h.height = layout.Size.Y + h.closeBtn
+			h.panelHeight = layout.Size.Y + h.closeBtn
 			return layout
 		}),
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+		layout.Rigid(func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				layout.Rigid(func(gtx C) D {
 					return layout.UniformInset(unit.Dp(5)).Layout(gtx, material.CheckBox(th, &h.debug, "Show Frame Rates").Layout)
 				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				layout.Rigid(func(gtx C) D {
 					return layout.UniformInset(unit.Dp(10)).Layout(gtx, material.Button(th, &h.reset, "Reset").Layout)
 				}),
 			)
 		}),
 
-		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+		layout.Flexed(1, func(gtx C) D {
 			w := material.Body1(th, fmt.Sprintf("2D Cloth Simulation %s\nCopyright © 2023, Endre Simo", Version))
 			w.Alignment = text.End
 			w.Color = th.ContrastBg
 			w.TextSize = 12
-			txtOffs := h.height - (3 * h.closeBtn)
+			txtOffs := h.panelHeight - (3 * h.closeBtn)
 
 			defer op.Offset(image.Point{Y: txtOffs}).Push(gtx.Ops).Pop()
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				layout.Rigid(func(gtx C) D {
 					return layout.UniformInset(unit.Dp(10)).Layout(gtx, w.Layout)
 				}),
 			)
@@ -235,7 +236,7 @@ func (h *Hud) ShowHideControlsArea(gtx layout.Context, th *material.Theme, m *Mo
 // DrawCtrlBtn draws the button which activates the main HUD area with the sliders.
 func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
 	progress := h.slide.Update(gtx, isActive)
-	pos := h.slide.Animate(progress) * float64(h.height)
+	pos := h.slide.Animate(progress) * float64(h.panelHeight)
 	offset := gtx.Dp(unit.Dp(60))
 
 	offStack := op.Offset(image.Pt(0, gtx.Constraints.Max.Y-offset+int(pos))).Push(gtx.Ops)

@@ -13,7 +13,7 @@ import (
 const (
 	clothPinDist = 4
 	defFocusArea = 50
-	minFocusArea = 20
+	minFocusArea = 30
 	maxFocusArea = 120
 	maxDragForce = 20
 )
@@ -50,7 +50,6 @@ func NewParticle(x, y float64, hud *Hud, col color.NRGBA) *Particle {
 
 // Update updates the particle system using the Verlet integration.
 func (p *Particle) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta float64) {
-	//p.draw(gtx, float32(p.x), float32(p.y), 2)
 	p.update(gtx, mouse, hud, delta)
 }
 
@@ -86,6 +85,11 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64
 	tearDistance := float64(hud.sliders[3].widget.Value)
 
 	if p.pinX {
+		// Recalculate the pinned particles position when the window is resized.
+		// We need to do this only for the pinned particles, because the rest
+		// of the particles will just adjust themselves.
+		p.x += hud.winOffsetX
+		p.y += hud.winOffsetY
 		return
 	}
 
