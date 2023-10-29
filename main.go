@@ -28,11 +28,14 @@ import (
 const (
 	hudTimeout = 2.5
 	delta      = 0.022
+
+	defaultWindowWidth  = 940
+	defaultWindowHeigth = 580
 )
 
 var (
-	windowWidth  = 940
-	windowHeight = 580
+	windowWidth  = defaultWindowWidth
+	windowHeight = defaultWindowHeigth
 
 	// Gio Ops related variables
 	ops          op.Ops
@@ -62,7 +65,6 @@ func main() {
 			app.Title("Gio - 2D Cloth Simulation"),
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
-		//w.Perform(system.ActionMaximize)
 		if err := loop(w); err != nil {
 			log.Fatal(err)
 		}
@@ -89,8 +91,8 @@ func loop(w *app.Window) error {
 
 	isDragging := false
 
-	var clothW int = int(float64(windowWidth) * 1.3)
-	var clothH int = int(float64(windowHeight) * 0.4)
+	var clothW int = int(unit.Dp(windowWidth) * 1.2)
+	var clothH int = int(unit.Dp(windowHeight) * 0.4)
 
 	cloth := NewCloth(clothW, clothH, 8, 0.99, defaultColor)
 	hud := NewHud()
@@ -129,8 +131,9 @@ func loop(w *app.Window) error {
 					width := gtx.Constraints.Max.X
 					height := gtx.Constraints.Max.Y
 
-					startX := width/2 - clothW/2
-					startY := int(float64(height) * 0.2)
+					startX := (width - clothW) / 2
+					startY := int(unit.Dp(height) * 0.2)
+
 					cloth.Init(startX, startY, hud)
 				}
 
@@ -144,21 +147,21 @@ func loop(w *app.Window) error {
 					mouse.increaseForce(deltaTime.Seconds())
 				}
 
-				resetCloth := func() {
-					width := gtx.Constraints.Max.X
-					height := gtx.Constraints.Max.Y
-
-					startX := width/2 - clothW/2
-					startY := int(float64(height) * 0.2)
-					cloth.Reset(startX, startY, hud)
-				}
-
 				for _, ev := range gtx.Queue.Events(&keyTag) {
 					if e, ok := ev.(key.Event); ok {
 						if e.State == key.Press {
 							switch e.Name {
 							case key.NameSpace:
-								resetCloth()
+								width := gtx.Constraints.Max.X
+								height := gtx.Constraints.Max.Y
+
+								startX := (width - clothW) / 2
+								startY := int(unit.Dp(height) * 0.2)
+
+								cloth.width = clothW
+								cloth.height = clothH
+
+								cloth.Reset(startX, startY, hud)
 							case key.NameF1:
 								hud.showHelp = !hud.showHelp
 							}
@@ -185,9 +188,11 @@ func loop(w *app.Window) error {
 
 					windowWidth = e.Size.X
 					windowHeight = e.Size.Y
+
 					cloth.width = windowWidth
 					cloth.height = windowHeight
 				}
+
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
 
 				layout.Stack{}.Layout(gtx,
@@ -298,6 +303,7 @@ func loop(w *app.Window) error {
 						}
 						hud.DrawCtrlBtn(gtx, th, mouse, hud.isActive)
 						hud.ShowControlPanel(gtx, th, mouse, hud.isActive)
+						hud.ShowHelpDialog(gtx, th, mouse, hud.showHelp)
 
 						return layout.Dimensions{}
 					}),

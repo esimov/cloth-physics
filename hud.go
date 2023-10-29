@@ -22,6 +22,8 @@ import (
 
 const Version = "v1.0.3"
 
+var hudControlBtnColor = color.NRGBA{R: 0xd9, G: 0x03, B: 0x68, A: 0xff}
+
 type (
 	D = layout.Dimensions
 	C = layout.Context
@@ -211,7 +213,9 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, m *Mouse,
 					return layout.UniformInset(unit.Dp(5)).Layout(gtx, material.CheckBox(th, &h.debug, "Show Frame Rates").Layout)
 				}),
 				layout.Rigid(func(gtx C) D {
-					return layout.UniformInset(unit.Dp(10)).Layout(gtx, material.Button(th, &h.reset, "Reset").Layout)
+					btnTheme := material.NewTheme()
+					btnTheme.Palette.ContrastBg = hudControlBtnColor
+					return layout.UniformInset(unit.Dp(10)).Layout(gtx, material.Button(btnTheme, &h.reset, "Reset").Layout)
 				}),
 			)
 		}),
@@ -305,7 +309,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 				pointer.CursorPointer.Add(gtx.Ops)
 				h.activator.Add(gtx.Ops)
 
-				paint.ColorOp{Color: color.NRGBA{R: 0xd9, G: 0x03, B: 0x68, A: 0xff}}.Add(gtx.Ops)
+				paint.ColorOp{Color: hudControlBtnColor}.Add(gtx.Ops)
 				paint.PaintOp{}.Add(gtx.Ops)
 
 				return layout.Dimensions{}
@@ -313,4 +317,56 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 		}),
 	)
 	offStack.Pop()
+}
+
+func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
+	if !isActive {
+		return
+	}
+
+	layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			centerX := gtx.Constraints.Max.X / 2
+			centerY := gtx.Constraints.Max.Y / 2
+
+			dialogWidth := gtx.Constraints.Max.X / 3
+			dialogHeight := gtx.Constraints.Max.Y / 3
+
+			px := gtx.Dp(unit.Dp(dialogWidth / 2))
+			py := gtx.Dp(unit.Dp(dialogHeight / 2))
+
+			dx, dy := centerX-px, centerY-py
+			fmt.Println(dialogWidth, dialogHeight)
+
+			// This offset will apply to the rest of the content laid out in this function.
+			defer op.Offset(image.Point{X: dx, Y: dy}).Push(gtx.Ops).Pop()
+
+			paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff},
+				clip.Rect{Max: image.Point{
+					X: dx,
+					Y: dy,
+				}}.Op())
+			paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff},
+				clip.Stroke{
+					Path: clip.Rect{Max: image.Point{
+						X: dx,
+						Y: dy,
+					}}.Path(),
+					Width: 0.2,
+				}.Op(),
+			)
+
+			pointer.InputOp{
+				Tag:   &h.hudTag,
+				Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Leave,
+			}.Add(gtx.Ops)
+			h.controls.Add(gtx.Ops)
+
+			pointer.CursorPointer.Add(gtx.Ops)
+
+			return layout.Dimensions{
+				Size: gtx.Constraints.Max,
+			}
+		}),
+	)
 }
