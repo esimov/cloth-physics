@@ -176,10 +176,10 @@ func loop(w *app.Window) error {
 				hud.winOffsetX = 0
 				hud.winOffsetY = 0
 
-				if e.Size.X != windowWidth {
+				if defaultWindowWidth != windowWidth {
 					hud.winOffsetX = float64(e.Size.X-windowWidth) * 0.5
 				}
-				if e.Size.Y != windowHeight {
+				if defaultWindowHeigth != windowHeight {
 					hud.winOffsetY = float64(e.Size.Y-windowHeight) * 0.25
 				}
 
