@@ -66,7 +66,7 @@ func main() {
 	go func() {
 		w := app.NewWindow(
 			app.Title("Gio - 2D Cloth Simulation"),
-			app.Size(unit.Dp(windowSizeX), unit.Dp(windowSizeY)),
+			app.Size(windowSizeX, windowSizeY),
 		)
 		if err := loop(w); err != nil {
 			log.Fatal(err)

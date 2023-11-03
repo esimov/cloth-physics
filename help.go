@@ -17,9 +17,9 @@ import (
 
 type help struct {
 	fontType   font.Typeface
-	lineHeight int
-	h1FontSize int
-	h2FontSize int
+	lineHeight unit.Dp
+	h1FontSize unit.Sp
+	h2FontSize unit.Sp
 }
 
 type command map[string]string
@@ -44,23 +44,23 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 			},
 		}, 0).Op(gtx.Ops))
 
-	centerX := int(unit.Dp(windowWidth / 2))
-	centerY := int(unit.Dp(windowHeight / 2))
+	centerX := windowWidth / 2
+	centerY := windowHeight / 2
 
-	fontSize := int(unit.Sp(h.h1FontSize))
-	lineHeight := int(unit.Dp(h.lineHeight))
+	fontSize := h.h1FontSize
+	lineHeight := h.lineHeight
 
 	switch width := windowWidth; {
 	case width <= windowSizeX*1.4:
-		panelWidth = int(unit.Dp(windowWidth / 2))
+		panelWidth = windowWidth / 2
 	default:
-		panelWidth = int(unit.Dp(windowWidth / 3))
+		panelWidth = windowWidth / 3
 	}
-	ph := len(h.commands) * fontSize * lineHeight
-	panelHeight = ph
 
-	px := int(unit.Dp(panelWidth / 2))
-	py := int(unit.Dp(panelHeight / 2))
+	panelHeight = len(h.commands) * gtx.Sp(fontSize) * gtx.Dp(lineHeight)
+
+	px := panelWidth / 2
+	py := panelHeight / 2
 	dx, dy := centerX-px, centerY-py
 
 	// Limit the applicable constraints to the panel size from this point onward.
@@ -92,11 +92,10 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 				}.Op(),
 			)
 
-			layoutOffset := unit.Dp(20)
-			return layout.UniformInset(layoutOffset).Layout(gtx, func(gtx C) D {
+			return layout.UniformInset(20).Layout(gtx, func(gtx C) D {
 				layout.Center.Layout(gtx, func(gtx C) D {
 					h1 := material.H2(th, "Quick help")
-					h1.TextSize = unit.Sp(h.h1FontSize)
+					h1.TextSize = h.h1FontSize
 					h1.Font.Typeface = h.fontType
 					h1.Font.Weight = font.SemiBold
 
@@ -104,8 +103,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 						layout.Rigid(h1.Layout),
 					)
 				})
-				colOffset := unit.Dp(200)
-				gtx.Constraints.Min.X = panelWidth - int(layoutOffset) - int(colOffset)
+				gtx.Constraints.Min.X = panelWidth - 220
 
 				defer op.Offset(image.Point{X: 0, Y: 50}).Push(gtx.Ops).Pop()
 				h.list.Layout(gtx, len(h.commands),
@@ -117,7 +115,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 							}
 						}
 						h2 := material.H2(th, builder.String())
-						h2.TextSize = unit.Sp(h.h2FontSize)
+						h2.TextSize = h.h2FontSize
 						h2.Font.Typeface = h.fontType
 						h2.Font.Weight = font.Weight(font.SemiBold)
 
@@ -126,7 +124,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 						)
 					},
 				)
-				defer op.Offset(image.Point{X: gtx.Dp(colOffset), Y: 0}).Push(gtx.Ops).Pop()
+				defer op.Offset(image.Point{X: gtx.Dp(200), Y: 0}).Push(gtx.Ops).Pop()
 				h.list.Layout(gtx, len(h.commands),
 					func(gtx C, index int) D {
 						builder := strings.Builder{}
@@ -136,7 +134,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 							}
 						}
 						h2 := material.H2(th, builder.String())
-						h2.TextSize = unit.Sp(h.h2FontSize)
+						h2.TextSize = h.h2FontSize
 						h2.Font.Typeface = h.fontType
 						h2.Font.Weight = font.Weight(font.Regular)
 

@@ -69,9 +69,9 @@ func NewHud() *Hud {
 		commands: make(map[int]command),
 		help: &help{
 			fontType:   "AlbertSans",
-			lineHeight: 3,
-			h1FontSize: 18,
-			h2FontSize: 15,
+			lineHeight: unit.Dp(3),
+			h1FontSize: unit.Sp(18),
+			h2FontSize: unit.Sp(15),
 		},
 	}
 
