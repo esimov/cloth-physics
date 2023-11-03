@@ -169,6 +169,9 @@ func loop(w *app.Window) error {
 								hud.showHelpPanel = !hud.showHelpPanel
 							}
 						}
+						if e.Name == key.NameEscape {
+							w.Perform(system.ActionClose)
+						}
 					}
 				}
 

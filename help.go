@@ -27,8 +27,8 @@ type command map[string]string
 // ShowHelpDialog activates a dialog panel whith a list of the available key shortcuts.
 func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bool) {
 	var (
-		panelWidth  unit.Dp
-		panelHeight unit.Dp
+		panelWidth  int
+		panelHeight int
 	)
 
 	// show the help dialog panel only if it's not yet activated.
@@ -44,28 +44,28 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 			},
 		}, 0).Op(gtx.Ops))
 
-	centerX := gtx.Dp(unit.Dp(windowWidth / 2))
-	centerY := gtx.Dp(unit.Dp(windowHeight / 2))
+	centerX := int(unit.Dp(windowWidth / 2))
+	centerY := int(unit.Dp(windowHeight / 2))
 
 	fontSize := int(unit.Sp(h.h1FontSize))
 	lineHeight := int(unit.Dp(h.lineHeight))
 
 	switch width := windowWidth; {
 	case width <= windowSizeX*1.4:
-		panelWidth = unit.Dp(windowWidth / 2)
+		panelWidth = int(unit.Dp(windowWidth / 2))
 	default:
-		panelWidth = unit.Dp(windowWidth / 3)
+		panelWidth = int(unit.Dp(windowWidth / 3))
 	}
 	ph := len(h.commands) * fontSize * lineHeight
-	panelHeight = unit.Dp(ph)
+	panelHeight = ph
 
 	px := int(unit.Dp(panelWidth / 2))
 	py := int(unit.Dp(panelHeight / 2))
 	dx, dy := centerX-px, centerY-py
 
 	// Limit the applicable constraints to the panel size from this point onward.
-	gtx.Constraints.Min.X = gtx.Dp(panelWidth)
-	gtx.Constraints.Max.X = gtx.Dp(panelWidth)
+	gtx.Constraints.Min.X = panelWidth
+	gtx.Constraints.Max.X = panelWidth
 
 	// This offset will apply to the rest of the content laid out in this function.
 	defer op.Offset(image.Point{X: dx, Y: dy}).Push(gtx.Ops).Pop()
@@ -77,16 +77,16 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 			paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff},
 				clip.UniformRRect(image.Rectangle{
 					Max: image.Point{
-						X: gtx.Dp(panelWidth),
-						Y: gtx.Dp(panelHeight),
+						X: panelWidth,
+						Y: panelHeight,
 					},
 				}, gtx.Dp(5)).Op(gtx.Ops))
 
 			paint.FillShape(gtx.Ops, color.NRGBA{A: 127},
 				clip.Stroke{
 					Path: clip.Rect{Max: image.Point{
-						X: gtx.Dp(panelWidth),
-						Y: gtx.Dp(panelHeight),
+						X: panelWidth,
+						Y: panelHeight,
 					}}.Path(),
 					Width: 0.2,
 				}.Op(),
@@ -105,7 +105,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 					)
 				})
 				colOffset := unit.Dp(200)
-				gtx.Constraints.Min.X = gtx.Dp(panelWidth - layoutOffset - colOffset)
+				gtx.Constraints.Min.X = panelWidth - int(layoutOffset) - int(colOffset)
 
 				defer op.Offset(image.Point{X: 0, Y: 50}).Push(gtx.Ops).Pop()
 				h.list.Layout(gtx, len(h.commands),
