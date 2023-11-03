@@ -87,7 +87,7 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64
 	if p.pinX {
 		// Recalculate the pinned particles position when the window is resized.
 		// We need to do this only for the pinned particles, because the rest
-		// of the particles will just adjust themselves.
+		// of the particles will just adjust themselves automatically.
 		p.x += hud.winOffsetX
 		p.y += hud.winOffsetY
 		return

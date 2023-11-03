@@ -29,6 +29,9 @@ const (
 	hudTimeout = 2.5
 	delta      = 0.022
 
+	windowSizeX = 1280
+	windowSizeY = 820
+
 	defaultWindowWidth  = 940
 	defaultWindowHeigth = 580
 )
@@ -63,7 +66,7 @@ func main() {
 	go func() {
 		w := app.NewWindow(
 			app.Title("Gio - 2D Cloth Simulation"),
-			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
+			app.Size(unit.Dp(windowSizeX), unit.Dp(windowSizeY)),
 		)
 		if err := loop(w); err != nil {
 			log.Fatal(err)
@@ -163,11 +166,8 @@ func loop(w *app.Window) error {
 
 								cloth.Reset(startX, startY, hud)
 							case key.NameF1:
-								hud.showHelp = !hud.showHelp
+								hud.showHelpPanel = !hud.showHelpPanel
 							}
-						}
-						if e.Name == key.NameEscape {
-							w.Perform(system.ActionClose)
 						}
 					}
 				}
@@ -191,6 +191,13 @@ func loop(w *app.Window) error {
 
 					cloth.width = windowWidth
 					cloth.height = windowHeight
+
+					if e.Size.X < defaultWindowWidth {
+						hud.showHelpPanel = false
+					}
+					if e.Size.Y < defaultWindowHeigth {
+						hud.showHelpPanel = false
+					}
 				}
 
 				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
@@ -244,6 +251,7 @@ func loop(w *app.Window) error {
 									}
 									mouse.setLeftButton()
 									initTime = time.Now()
+									hud.showHelpPanel = false
 								case pointer.Release:
 									isDragging = false
 
@@ -287,6 +295,7 @@ func loop(w *app.Window) error {
 						}
 
 						if hud.isActive {
+							hud.showHelpPanel = false
 							for _, ev := range gtx.Queue.Events(&hud.hudTag) {
 								switch ev := ev.(type) {
 								case pointer.Event:
@@ -301,9 +310,9 @@ func loop(w *app.Window) error {
 								}
 							}
 						}
-						hud.DrawCtrlBtn(gtx, th, mouse, hud.isActive)
-						hud.ShowControlPanel(gtx, th, mouse, hud.isActive)
-						hud.ShowHelpDialog(gtx, th, mouse, hud.showHelp)
+						hud.DrawCtrlBtn(gtx, th, hud.isActive)
+						hud.ShowControlPanel(gtx, th, hud.isActive)
+						hud.ShowHelpDialog(gtx, th, hud.showHelpPanel)
 
 						return layout.Dimensions{}
 					}),

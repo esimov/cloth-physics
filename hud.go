@@ -22,7 +22,7 @@ import (
 
 const Version = "v1.0.3"
 
-var hudControlBtnColor = color.NRGBA{R: 0xd9, G: 0x03, B: 0x68, A: 0xff}
+var HudDefaultColor = color.NRGBA{R: 0xd9, G: 0x03, B: 0x68, A: 0xff}
 
 type (
 	D = layout.Dimensions
@@ -30,25 +30,27 @@ type (
 )
 
 type Hud struct {
-	hudTag      struct{}
-	panelInit   time.Time
-	panelWidth  int
-	panelHeight int
-	winOffsetX  float64 // stores the X offset on window horizontal resize
-	winOffsetY  float64 // stores the Y offset on window vertical resize
-	ctrlBtn     *Easing
-	sliders     map[int]*slider
-	slide       *Easing
-	reset       widget.Clickable
-	debug       widget.Bool
-	list        layout.List
-	activator   gesture.Click
-	closer      gesture.Click
-	closeBtn    int
-	btnSize     int
-	controls    gesture.Hover
-	isActive    bool
-	showHelp    bool
+	hudTag        struct{}
+	panelInit     time.Time
+	panelWidth    int
+	panelHeight   int
+	winOffsetX    float64 // stores the X offset on window horizontal resize
+	winOffsetY    float64 // stores the Y offset on window vertical resize
+	ctrlBtn       *Easing
+	sliders       map[int]*slider
+	commands      map[int]command
+	slide         *Easing
+	reset         widget.Clickable
+	debug         widget.Bool
+	list          layout.List
+	activator     gesture.Click
+	closer        gesture.Click
+	closeBtn      int
+	btnSize       int
+	controls      gesture.Hover
+	isActive      bool
+	showHelpPanel bool
+	*help
 }
 
 type slider struct {
@@ -62,7 +64,16 @@ type slider struct {
 
 // NewHud creates a new HUD used to interactively change the default settings via sliders and checkboxes.
 func NewHud() *Hud {
-	hud := Hud{sliders: make(map[int]*slider)}
+	hud := Hud{
+		sliders:  make(map[int]*slider),
+		commands: make(map[int]command),
+		help: &help{
+			fontType:   "AlbertSans",
+			lineHeight: 3,
+			h1FontSize: 18,
+			h2FontSize: 15,
+		},
+	}
 
 	sliders := []slider{
 		{title: "Drag force", min: 2, value: 4, max: 25},
@@ -70,9 +81,21 @@ func NewHud() *Hud {
 		{title: "Elasticity", min: 10, value: 30, max: 50},
 		{title: "Tear distance", min: 5, value: 20, max: 80},
 	}
-
 	for idx, s := range sliders {
 		hud.addSlider(idx, s)
+	}
+
+	commands := []command{
+		{"F1": "Toggle the quick help panel"},
+		{"Space": "Redraw the cloth"},
+		{"Right click": "Tear the cloth at mouse position"},
+		{"Click & hold": "Increase the mouse pressure"},
+		{"Scroll Up/Down": "Change the mouse focus area"},
+		{"Ctrl+click": "Pin the cloth particle at mouse position"},
+	}
+
+	for idx, cmd := range commands {
+		hud.commands[idx] = cmd
 	}
 
 	slide := &Easing{duration: 600 * time.Millisecond}
@@ -95,7 +118,7 @@ func (h *Hud) addSlider(index int, s slider) {
 }
 
 // ShowControlPanel is responsible for showing or hiding the HUD control elements.
-func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
+func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive bool) {
 	if h.reset.Pressed() {
 		for _, s := range h.sliders {
 			s.widget.Value = s.value
@@ -141,7 +164,7 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, m *Mouse,
 
 		paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 			Path:  path.End(),
-			Width: float32(unit.Dp(2)),
+			Width: float32(unit.Dp(3)),
 		}.Op())
 	}
 
@@ -214,7 +237,7 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, m *Mouse,
 				}),
 				layout.Rigid(func(gtx C) D {
 					btnTheme := material.NewTheme()
-					btnTheme.Palette.ContrastBg = hudControlBtnColor
+					btnTheme.Palette.ContrastBg = HudDefaultColor
 					return layout.UniformInset(unit.Dp(10)).Layout(gtx, material.Button(btnTheme, &h.reset, "Reset").Layout)
 				}),
 			)
@@ -238,7 +261,7 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, m *Mouse,
 }
 
 // DrawCtrlBtn draws the button which activates the main HUD area with the sliders.
-func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
+func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool) {
 	progress := h.slide.Update(gtx, isActive)
 	pos := h.slide.Animate(progress) * float64(h.panelHeight)
 	offset := gtx.Dp(unit.Dp(60))
@@ -309,7 +332,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 				pointer.CursorPointer.Add(gtx.Ops)
 				h.activator.Add(gtx.Ops)
 
-				paint.ColorOp{Color: hudControlBtnColor}.Add(gtx.Ops)
+				paint.ColorOp{Color: HudDefaultColor}.Add(gtx.Ops)
 				paint.PaintOp{}.Add(gtx.Ops)
 
 				return layout.Dimensions{}
@@ -317,56 +340,4 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, m *Mouse, isAc
 		}),
 	)
 	offStack.Pop()
-}
-
-func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, m *Mouse, isActive bool) {
-	if !isActive {
-		return
-	}
-
-	layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			centerX := gtx.Constraints.Max.X / 2
-			centerY := gtx.Constraints.Max.Y / 2
-
-			dialogWidth := gtx.Constraints.Max.X / 3
-			dialogHeight := gtx.Constraints.Max.Y / 3
-
-			px := gtx.Dp(unit.Dp(dialogWidth / 2))
-			py := gtx.Dp(unit.Dp(dialogHeight / 2))
-
-			dx, dy := centerX-px, centerY-py
-			fmt.Println(dialogWidth, dialogHeight)
-
-			// This offset will apply to the rest of the content laid out in this function.
-			defer op.Offset(image.Point{X: dx, Y: dy}).Push(gtx.Ops).Pop()
-
-			paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff},
-				clip.Rect{Max: image.Point{
-					X: dx,
-					Y: dy,
-				}}.Op())
-			paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff},
-				clip.Stroke{
-					Path: clip.Rect{Max: image.Point{
-						X: dx,
-						Y: dy,
-					}}.Path(),
-					Width: 0.2,
-				}.Op(),
-			)
-
-			pointer.InputOp{
-				Tag:   &h.hudTag,
-				Types: pointer.Scroll | pointer.Move | pointer.Press | pointer.Drag | pointer.Release | pointer.Leave,
-			}.Add(gtx.Ops)
-			h.controls.Add(gtx.Ops)
-
-			pointer.CursorPointer.Add(gtx.Ops)
-
-			return layout.Dimensions{
-				Size: gtx.Constraints.Max,
-			}
-		}),
-	)
 }
