@@ -48,7 +48,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 	centerY := windowHeight / 2
 
 	switch width := gtx.Dp(unit.Dp(windowWidth)); {
-	case width <= windowSizeX:
+	case width <= gtx.Dp(windowSizeX):
 		panelWidth = gtx.Dp(unit.Dp(windowWidth / 2))
 	default:
 		panelWidth = gtx.Dp(unit.Dp(windowWidth / 3))
@@ -61,7 +61,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 
 	// Limit the applicable constraints to the panel size from this point onward.
 	gtx.Constraints.Min.X = panelWidth
-	gtx.Constraints.Max.X = panelWidth
+	gtx.Constraints.Max.X = gtx.Constraints.Min.X
 
 	// This offset will apply to the rest of the content laid out in this function.
 	defer op.Offset(image.Point{X: dx, Y: dy}).Push(gtx.Ops).Pop()
@@ -99,9 +99,9 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 						layout.Rigid(h1.Layout),
 					)
 				})
-				gtx.Constraints.Min.X = panelWidth - 220
+				gtx.Constraints.Min.X = panelWidth - gtx.Dp(220)
+				defer op.Offset(image.Point{X: 0, Y: gtx.Dp(50)}).Push(gtx.Ops).Pop()
 
-				defer op.Offset(image.Point{X: 0, Y: 50}).Push(gtx.Ops).Pop()
 				h.list.Layout(gtx, len(h.commands),
 					func(gtx C, index int) D {
 						builder := strings.Builder{}

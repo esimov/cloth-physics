@@ -282,8 +282,8 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool)
 
 				var path clip.Path
 
-				offset := float32(unit.Dp(10))
-				btnSize := float32(h.btnSize)
+				offset := float32(gtx.Dp(unit.Dp(10)))
+				btnSize := float32(unit.Dp(h.btnSize))
 				spacing := btnSize / 4
 				startX := btnSize/2 - spacing
 
