@@ -111,7 +111,7 @@ func loop(w *app.Window) error {
 			case system.FrameEvent:
 				start := hrtime.Now()
 				gtx := layout.NewContext(&ops, e)
-				hud.panelWidth = windowWidth
+				hud.panelWidth = gtx.Dp(unit.Dp(windowSizeX))
 				hud.btnSize = gtx.Dp(unit.Dp(40))
 				hud.closeBtn = gtx.Dp(unit.Dp(25))
 

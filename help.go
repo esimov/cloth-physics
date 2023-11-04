@@ -17,9 +17,9 @@ import (
 
 type help struct {
 	fontType   font.Typeface
-	lineHeight unit.Dp
-	h1FontSize unit.Sp
-	h2FontSize unit.Sp
+	lineHeight int
+	h1FontSize int
+	h2FontSize int
 }
 
 type command map[string]string
@@ -47,17 +47,13 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 	centerX := windowWidth / 2
 	centerY := windowHeight / 2
 
-	fontSize := h.h1FontSize
-	lineHeight := h.lineHeight
-
-	switch width := windowWidth; {
-	case width <= windowSizeX*1.4:
-		panelWidth = windowWidth / 2
+	switch width := gtx.Dp(unit.Dp(windowWidth)); {
+	case width <= windowSizeX:
+		panelWidth = gtx.Dp(unit.Dp(windowWidth / 2))
 	default:
-		panelWidth = windowWidth / 3
+		panelWidth = gtx.Dp(unit.Dp(windowWidth / 3))
 	}
-
-	panelHeight = len(h.commands) * gtx.Sp(fontSize) * gtx.Dp(lineHeight)
+	panelHeight = gtx.Dp(unit.Dp(300))
 
 	px := panelWidth / 2
 	py := panelHeight / 2
@@ -95,7 +91,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 			return layout.UniformInset(20).Layout(gtx, func(gtx C) D {
 				layout.Center.Layout(gtx, func(gtx C) D {
 					h1 := material.H2(th, "Quick help")
-					h1.TextSize = h.h1FontSize
+					h1.TextSize = unit.Sp(h.h1FontSize)
 					h1.Font.Typeface = h.fontType
 					h1.Font.Weight = font.SemiBold
 
@@ -115,7 +111,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 							}
 						}
 						h2 := material.H2(th, builder.String())
-						h2.TextSize = h.h2FontSize
+						h2.TextSize = unit.Sp(h.h2FontSize)
 						h2.Font.Typeface = h.fontType
 						h2.Font.Weight = font.Weight(font.SemiBold)
 
@@ -134,7 +130,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 							}
 						}
 						h2 := material.H2(th, builder.String())
-						h2.TextSize = h.h2FontSize
+						h2.TextSize = unit.Sp(h.h2FontSize)
 						h2.Font.Typeface = h.fontType
 						h2.Font.Weight = font.Weight(font.Regular)
 

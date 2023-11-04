@@ -69,9 +69,9 @@ func NewHud() *Hud {
 		commands: make(map[int]command),
 		help: &help{
 			fontType:   "AlbertSans",
-			lineHeight: unit.Dp(3),
-			h1FontSize: unit.Sp(18),
-			h2FontSize: unit.Sp(15),
+			lineHeight: 3,
+			h1FontSize: 18,
+			h2FontSize: 15,
 		},
 	}
 
@@ -208,14 +208,13 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive 
 	pointer.CursorPointer.Add(gtx.Ops)
 
 	/* Draw HUD Contents */
-	sectionWidth := gtx.Dp(unit.Dp(h.panelWidth / 3))
 	layout.Flex{
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			gtx.Constraints.Min.X = sectionWidth
-			gtx.Constraints.Max.X = sectionWidth
-			layout := layout.UniformInset(unit.Dp(10)).Layout(gtx, func(gtx C) D {
+			gtx.Constraints.Min.X = h.panelWidth / 3
+			gtx.Constraints.Max.X = gtx.Constraints.Min.X
+			layout := layout.UniformInset(unit.Dp(20)).Layout(gtx, func(gtx C) D {
 				return h.list.Layout(gtx, len(h.sliders),
 					func(gtx C, index int) D {
 						if slider, ok := h.sliders[index]; ok {
@@ -253,7 +252,7 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive 
 			defer op.Offset(image.Point{Y: txtOffs}).Push(gtx.Ops).Pop()
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 				layout.Rigid(func(gtx C) D {
-					return layout.UniformInset(unit.Dp(10)).Layout(gtx, w.Layout)
+					return layout.Inset{Bottom: 0, Right: unit.Dp(20)}.Layout(gtx, w.Layout)
 				}),
 			)
 		}),
