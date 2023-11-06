@@ -167,10 +167,11 @@ func loop(w *app.Window) error {
 								cloth.Reset(startX, startY, hud)
 							case key.NameF1:
 								hud.showHelpPanel = !hud.showHelpPanel
+								hud.isActive = false
 							}
 						}
 						if e.Name == key.NameEscape {
-							w.Perform(system.ActionClose)
+							hud.showHelpPanel = false
 						}
 					}
 				}

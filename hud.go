@@ -142,7 +142,7 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive 
 		}.Op())
 
 		paint.FillShape(gtx.Ops, color.NRGBA{A: 20}, clip.Rect{
-			Max: image.Point{gtx.Constraints.Max.X, gtx.Dp(1)},
+			Max: image.Point{gtx.Constraints.Max.X, gtx.Dp(unit.Dp(1))},
 		}.Op())
 	}
 
@@ -164,7 +164,7 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive 
 
 		paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 			Path:  path.End(),
-			Width: float32(unit.Dp(3)),
+			Width: float32(gtx.Dp(unit.Dp(3))),
 		}.Op())
 	}
 
@@ -173,7 +173,7 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive 
 	)
 	paint.FillShape(gtx.Ops, th.ContrastBg, clip.Stroke{
 		Path:  buttonArea.Path(gtx.Ops),
-		Width: 0.3,
+		Width: float32(gtx.Dp(unit.Dp(0.2))),
 	}.Op())
 
 	buttonStack := buttonArea.Push(gtx.Ops)
@@ -278,7 +278,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool)
 				}
 
 				progress := h.ctrlBtn.Update(gtx, isActive || h.activator.Hovered())
-				btnWidth := h.ctrlBtn.Animate(progress) * 2.5
+				btnWidth := h.ctrlBtn.Animate(progress) * 1.5
 
 				var path clip.Path
 
@@ -298,7 +298,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool)
 
 							paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 								Path:  path.End(),
-								Width: float32(unit.Dp(4)),
+								Width: float32(gtx.Dp(unit.Dp(2.5))),
 							}.Op())
 						}(startX+(spacing*i), offset)
 					}
@@ -317,7 +317,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool)
 							defer clip.Outline{Path: path.End()}.Op().Push(gtx.Ops).Pop()
 							paint.ColorOp{Color: color.NRGBA{A: 0xff}}.Add(gtx.Ops)
 							paint.PaintOp{}.Add(gtx.Ops)
-						}(startX+(spacing*i), offset+(spacing*i), float32(unit.Dp(6)))
+						}(startX+(spacing*i), offset+(spacing*i), float32(gtx.Dp(unit.Dp(4.5))))
 					}
 				}
 
@@ -325,7 +325,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool)
 					Path: clip.UniformRRect(image.Rectangle{
 						Max: image.Pt(h.btnSize, h.btnSize),
 					}, gtx.Dp(10)).Path(gtx.Ops),
-					Width: 2.0 + float32(btnWidth),
+					Width: 2.0 + float32(gtx.Dp(unit.Dp(btnWidth))),
 				}.Op().Push(gtx.Ops).Pop()
 
 				pointer.CursorPointer.Add(gtx.Ops)
