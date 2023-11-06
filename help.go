@@ -92,7 +92,6 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 				layout.Center.Layout(gtx, func(gtx C) D {
 					h1 := material.H2(th, "Quick help")
 					h1.TextSize = unit.Sp(h.h1FontSize)
-					h1.Font.Typeface = h.fontType
 					h1.Font.Weight = font.SemiBold
 
 					return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
@@ -112,7 +111,6 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 						}
 						h2 := material.H2(th, builder.String())
 						h2.TextSize = unit.Sp(h.h2FontSize)
-						h2.Font.Typeface = h.fontType
 						h2.Font.Weight = font.Weight(font.SemiBold)
 
 						return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
@@ -131,7 +129,6 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 						}
 						h2 := material.H2(th, builder.String())
 						h2.TextSize = unit.Sp(h.h2FontSize)
-						h2.Font.Typeface = h.fontType
 						h2.Font.Weight = font.Weight(font.Regular)
 
 						return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,

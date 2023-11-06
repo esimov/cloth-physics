@@ -25,6 +25,8 @@ import (
 	"github.com/loov/hrtime"
 )
 
+const Version = "v1.0.3"
+
 const (
 	hudTimeout = 2.5
 	delta      = 0.022

@@ -20,8 +20,6 @@ import (
 	"gioui.org/widget/material"
 )
 
-const Version = "v1.0.3"
-
 var HudDefaultColor = color.NRGBA{R: 0xd9, G: 0x03, B: 0x68, A: 0xff}
 
 type (
@@ -298,7 +296,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool)
 
 							paint.FillShape(gtx.Ops, color.NRGBA{A: 0xff}, clip.Stroke{
 								Path:  path.End(),
-								Width: float32(gtx.Dp(unit.Dp(2.5))),
+								Width: float32(gtx.Dp(unit.Dp(2.0))),
 							}.Op())
 						}(startX+(spacing*i), offset)
 					}
