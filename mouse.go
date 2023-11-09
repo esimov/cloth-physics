@@ -70,7 +70,7 @@ func (m *Mouse) getCtrlDown() bool {
 	return m.ctrlDown
 }
 
-func (m *Mouse) increaseForce(force float64) {
+func (m *Mouse) setForce(force float64) {
 	m.force = force
 }
 

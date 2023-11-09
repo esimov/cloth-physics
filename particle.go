@@ -15,7 +15,6 @@ const (
 	defFocusArea = 50
 	minFocusArea = 30
 	maxFocusArea = 120
-	maxDragForce = 20
 )
 
 // Particle holds the basic components of the particle system.
@@ -24,7 +23,7 @@ type Particle struct {
 	px, py      float64
 	vx, vy      float64
 	friction    float64
-	elasticity  float64
+	stiffness   float64
 	dragForce   float64
 	pinX        bool
 	isActive    bool
@@ -37,13 +36,13 @@ func NewParticle(x, y float64, hud *Hud, col color.NRGBA) *Particle {
 	p := &Particle{
 		x: x, y: y, px: x, py: y, color: col,
 	}
-	dragForce := float64(hud.sliders[0].widget.Value)
-	elasticity := float64(hud.sliders[2].widget.Value)
+	hudDragForce := float64(hud.sliders[0].widget.Value)
+	hudStiffness := float64(hud.sliders[2].widget.Value)
 
 	p.isActive = true
 	p.highlighted = false
-	p.dragForce = dragForce
-	p.elasticity = elasticity
+	p.dragForce = hudDragForce
+	p.stiffness = hudStiffness
 
 	return p
 }
@@ -53,7 +52,7 @@ func (p *Particle) Update(gtx layout.Context, mouse *Mouse, hud *Hud, delta floa
 	p.update(gtx, mouse, hud, delta)
 }
 
-// draw draws the particle at the {x, y} position with the radius `r`.
+// Deprecated: draw draws the particle at the {x, y} position with the radius `r`.
 func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 	var (
 		sq   float64
@@ -81,8 +80,12 @@ func (p *Particle) draw(gtx layout.Context, x, y, r float32) {
 func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64) {
 	p.highlighted = false
 
+	p.friction = float64(hud.sliders[3].widget.Value)
+	p.dragForce = float64(hud.sliders[0].widget.Value)
+	p.stiffness = float64(hud.sliders[2].widget.Value)
+
 	gravityForce := float64(hud.sliders[1].widget.Value)
-	tearDistance := float64(hud.sliders[3].widget.Value)
+	tearDistance := float64(hud.sliders[4].widget.Value)
 
 	if p.pinX {
 		// Recalculate the pinned particles position when the window is resized.
@@ -91,6 +94,13 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64
 		p.x += hud.winOffsetX
 		p.y += hud.winOffsetY
 		return
+	}
+
+	// Holding the left mouse button will increase the dragging force
+	// resulting in a much advanced cloth destruction.
+	if mouse.getLeftButton() {
+		maxDragForce := float64(hud.sliders[0].max)
+		p.increaseForce(mouse, maxDragForce)
 	}
 
 	// Window width and height.
@@ -103,17 +113,17 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64
 	if mouse.getDragging() && dist < float64(tearDistance) {
 		dx := mouse.x - mouse.px
 		dy := mouse.y - mouse.py
-		if dx > p.elasticity {
-			dx = p.elasticity
+		if dx > p.stiffness {
+			dx = p.stiffness
 		}
-		if dy > p.elasticity {
-			dy = p.elasticity
+		if dy > p.stiffness {
+			dy = p.stiffness
 		}
-		if dx < -p.elasticity {
-			dx = -p.elasticity
+		if dx < -p.stiffness {
+			dx = -p.stiffness
 		}
-		if dy < -p.elasticity {
-			dy = -p.elasticity
+		if dy < -p.stiffness {
+			dy = -p.stiffness
 		}
 		p.px = p.x - dx*p.dragForce
 		p.py = p.y - dy*p.dragForce
@@ -141,14 +151,6 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64
 		if dist < float64(focusArea) {
 			p.isActive = false
 		}
-	}
-
-	// Holding the left mouse button will increase the dragging force
-	// resulting in a much advanced cloth destruction.
-	if mouse.getLeftButton() {
-		p.increaseForce(mouse)
-	} else {
-		p.resetForce(hud)
 	}
 
 	px, py := p.x, p.y
@@ -184,14 +186,9 @@ func (p *Particle) update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64
 }
 
 // increaseForce increases the dragging force.
-func (p *Particle) increaseForce(m *Mouse) {
-	p.dragForce += m.force
+func (p *Particle) increaseForce(m *Mouse, maxDragForce float64) {
+	p.dragForce += m.getForce()
 	if p.dragForce > maxDragForce {
 		p.dragForce = maxDragForce
 	}
-}
-
-// resetForce resets the dragging force to the default value.
-func (p *Particle) resetForce(hud *Hud) {
-	p.dragForce = float64(hud.sliders[0].value)
 }

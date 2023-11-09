@@ -42,11 +42,19 @@ var (
 	windowWidth  = defaultWindowWidth
 	windowHeight = defaultWindowHeigth
 
+	// App related variables
+	hud    *Hud
+	cloth  *Cloth
+	mouse  *Mouse
+	clothW int
+	clothH int
+
 	// Gio Ops related variables
 	ops          op.Ops
 	initTime     time.Time
 	deltaTime    time.Duration
 	mouseScrollY unit.Dp
+	mouseDrag    bool
 
 	// pprof related variables
 	profile string
@@ -64,6 +72,9 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	hud = NewHud()
+	mouse = &Mouse{maxScrollY: unit.Dp(maxFocusArea)}
+	mouse.setScrollY(defFocusArea)
 
 	go func() {
 		w := app.NewWindow(
@@ -79,6 +90,8 @@ func main() {
 }
 
 func loop(w *app.Window) error {
+	var keyTag struct{}
+
 	if profile != "" {
 		defer pprof.StopCPUProfile()
 	}
@@ -91,19 +104,6 @@ func loop(w *app.Window) error {
 	th.Palette.ContrastBg = defaultColor
 	th.FingerSize = 15
 
-	mouse := &Mouse{maxScrollY: unit.Dp(maxFocusArea)}
-	mouse.setScrollY(defFocusArea)
-
-	isDragging := false
-
-	var clothW int = int(unit.Dp(windowWidth) * 1.2)
-	var clothH int = int(unit.Dp(windowHeight) * 0.4)
-
-	cloth := NewCloth(clothW, clothH, 8, 0.99, defaultColor)
-	hud := NewHud()
-
-	var keyTag struct{}
-
 	for {
 		select {
 		case e := <-w.Events():
@@ -115,7 +115,7 @@ func loop(w *app.Window) error {
 				gtx := layout.NewContext(&ops, e)
 				hud.panelWidth = gtx.Dp(unit.Dp(windowSizeX))
 				hud.btnSize = gtx.Dp(unit.Dp(40))
-				hud.closeBtn = gtx.Dp(unit.Dp(25))
+				hud.closeBtn = gtx.Dp(unit.Dp(30))
 
 				if hud.isActive {
 					if !hud.panelInit.IsZero() {
@@ -132,11 +132,16 @@ func loop(w *app.Window) error {
 					pprof.StartCPUProfile(file)
 				}
 
-				if !cloth.isInitialized {
+				// Cloth is not initialized yet. Initialize it.
+				if cloth == nil {
+					clothW = gtx.Dp(unit.Dp(windowWidth))
+					clothH = gtx.Dp(unit.Dp(windowHeight) * 0.33)
+					cloth = NewCloth(clothW, clothH, 12, 0.98, defaultColor)
+
 					width := gtx.Constraints.Max.X
 					height := gtx.Constraints.Max.Y
 
-					startX := (width - clothW) / 2
+					startX := int(unit.Dp(width-clothW) / 2)
 					startY := int(unit.Dp(height) * 0.2)
 
 					cloth.Init(startX, startY, hud)
@@ -149,7 +154,7 @@ func loop(w *app.Window) error {
 
 				if mouse.getLeftButton() {
 					deltaTime = time.Since(initTime)
-					mouse.increaseForce(deltaTime.Seconds())
+					mouse.setForce(deltaTime.Seconds() * 5)
 				}
 
 				for _, ev := range gtx.Queue.Events(&keyTag) {
@@ -205,8 +210,9 @@ func loop(w *app.Window) error {
 						hud.showHelpPanel = false
 					}
 				}
-
-				fillBackground(gtx, color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff})
+				// Fill background
+				paint.ColorOp{Color: color.NRGBA{R: 0xf2, G: 0xf2, B: 0xf2, A: 0xff}}.Add(gtx.Ops)
+				paint.PaintOp{}.Add(gtx.Ops)
 
 				layout.Stack{}.Layout(gtx,
 					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
@@ -259,22 +265,22 @@ func loop(w *app.Window) error {
 									initTime = time.Now()
 									hud.showHelpPanel = false
 								case pointer.Release:
-									isDragging = false
+									mouseDrag = false
 
 									mouse.resetForce()
 									mouse.releaseLeftButton()
 									mouse.releaseRightButton()
-									mouse.setDragging(isDragging)
+									mouse.setDragging(mouseDrag)
 									mouse.setCtrlDown(false)
 								case pointer.Drag:
-									isDragging = true
+									mouseDrag = true
 								}
 								switch ev.Buttons {
 								case pointer.ButtonPrimary:
 									mouse.setLeftButton()
 									pos := mouse.getCurrentPosition(ev)
 									mouse.updatePosition(float64(pos.X), float64(pos.Y))
-									mouse.setDragging(isDragging)
+									mouse.setDragging(mouseDrag)
 								case pointer.ButtonSecondary:
 									mouse.setRightButton()
 									pos := mouse.getCurrentPosition(ev)
@@ -329,9 +335,4 @@ func loop(w *app.Window) error {
 			}
 		}
 	}
-}
-
-func fillBackground(gtx layout.Context, col color.NRGBA) {
-	paint.ColorOp{Color: col}.Add(gtx.Ops)
-	paint.PaintOp{}.Add(gtx.Ops)
 }

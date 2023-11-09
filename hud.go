@@ -54,7 +54,6 @@ type Hud struct {
 type slider struct {
 	widget *widget.Float
 	title  string
-	index  int
 	min    float32
 	value  float32
 	max    float32
@@ -74,9 +73,10 @@ func NewHud() *Hud {
 	}
 
 	sliders := []slider{
-		{title: "Drag force", min: 2, value: 4, max: 25},
+		{title: "Drag force", min: 1.1, value: 2, max: 15},
 		{title: "Gravity force", min: 100, value: 250, max: 500},
 		{title: "Elasticity", min: 10, value: 30, max: 50},
+		{title: "Stiffness", min: 0.95, value: 0.98, max: 0.99},
 		{title: "Tear distance", min: 5, value: 20, max: 80},
 	}
 	for idx, s := range sliders {
@@ -151,7 +151,7 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive 
 	)
 
 	{ // Draw close button
-		offset := float32(gtx.Dp(unit.Dp(16)))
+		offset := float32(gtx.Dp(unit.Dp(8)))
 
 		var path clip.Path
 		path.Begin(gtx.Ops)
@@ -216,8 +216,14 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive 
 				return h.list.Layout(gtx, len(h.sliders),
 					func(gtx C, index int) D {
 						if slider, ok := h.sliders[index]; ok {
+							var precisionFmt string
+							if slider.widget.Value > 1 {
+								precisionFmt = "%s: %.0f"
+							} else {
+								precisionFmt = "%s: %.2f"
+							}
 							return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-								layout.Rigid(material.Body1(th, fmt.Sprintf("%s: %.0f", slider.title, slider.widget.Value)).Layout),
+								layout.Rigid(material.Body1(th, fmt.Sprintf(precisionFmt, slider.title, slider.widget.Value)).Layout),
 								layout.Flexed(1, material.Slider(th, slider.widget, slider.min, slider.max).Layout),
 							)
 						}

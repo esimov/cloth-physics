@@ -10,6 +10,8 @@ import (
 	"gioui.org/op/paint"
 )
 
+const lineWidth = 0.8
+
 type Cloth struct {
 	constraints   []*Constraint
 	particles     []*Particle
@@ -65,7 +67,7 @@ func (c *Cloth) Init(posX, posY int, hud *Hud) {
 				c.constraints = append(c.constraints, constraint)
 			}
 
-			pinX := x % (clothX / 7)
+			pinX := x % (clothX / 9)
 			if y == 0 && pinX == 0 {
 				particle.pinX = true
 			}
@@ -79,7 +81,7 @@ func (c *Cloth) Init(posX, posY int, hud *Hud) {
 // Update updates the cloth particles invoked on each frame event of the Gio internal window calls.
 // The cloth contraints are solved by using the Verlet integration formulas.
 func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64) {
-	dragForce := float32(mouse.getForce() * 0.75)
+	dragForce := float32(mouse.getForce() * 0.25)
 	clothColor := color.NRGBA{R: 0x55, A: 0xff}
 	// Convert the RGB color to HSL based on the applied force over the mouse focus area.
 	col := LinearFromSRGB(clothColor).HSLA().Lighten(dragForce).RGBA().SRGB()
@@ -93,8 +95,6 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float6
 			c.Update(gtx, cloth, mouse)
 		}
 	}
-
-	const lineWidth = 0.8
 
 	var path clip.Path
 	path.Begin(gtx.Ops)
