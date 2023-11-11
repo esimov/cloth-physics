@@ -34,8 +34,8 @@ const (
 	windowSizeX = 1280
 	windowSizeY = 820
 
-	defaultWindowWidth  = 940
-	defaultWindowHeigth = 580
+	defaultWindowWidth  = 1024
+	defaultWindowHeigth = 640
 )
 
 var (
@@ -48,6 +48,8 @@ var (
 	mouse  *Mouse
 	clothW int
 	clothH int
+
+	clothSpacing = 6
 
 	// Gio Ops related variables
 	ops          op.Ops
@@ -132,11 +134,17 @@ func loop(w *app.Window) error {
 					pprof.StartCPUProfile(file)
 				}
 
-				// Cloth is not initialized yet. Initialize it.
+				// Cloth is not initialized yet.
 				if cloth == nil {
 					clothW = gtx.Dp(unit.Dp(windowWidth))
 					clothH = gtx.Dp(unit.Dp(windowHeight) * 0.33)
-					cloth = NewCloth(clothW, clothH, 12, 0.98, defaultColor)
+					clothSpacing = func() int { // different cloth spacing for hi-res devices.
+						if clothW <= windowWidth {
+							return clothSpacing
+						}
+						return 2 * clothSpacing
+					}()
+					cloth = NewCloth(clothW, clothH, clothSpacing, defaultColor)
 
 					width := gtx.Constraints.Max.X
 					height := gtx.Constraints.Max.Y
@@ -151,6 +159,8 @@ func loop(w *app.Window) error {
 					Tag:  &keyTag,
 					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace + "|" + key.NameF1,
 				}.Add(gtx.Ops)
+
+				pointer.CursorPointer.Add(gtx.Ops)
 
 				if mouse.getLeftButton() {
 					deltaTime = time.Since(initTime)
