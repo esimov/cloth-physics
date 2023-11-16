@@ -76,8 +76,8 @@ func NewHud() *Hud {
 		{title: "Drag force", min: 1.1, value: 2, max: 15},
 		{title: "Gravity", min: 100, value: 250, max: 500},
 		{title: "Elasticity", min: 10, value: 30, max: 50},
-		{title: "Stiffness", min: 0.95, value: 0.98, max: 0.99},
-		{title: "Tear distance", min: 5, value: 20, max: 80},
+		{title: "Easiness", min: 0.95, value: 0.98, max: 0.99},
+		{title: "Tear distance", min: 5, value: 15, max: 50},
 	}
 	for idx, s := range sliders {
 		hud.addSlider(idx, s)

@@ -160,8 +160,6 @@ func loop(w *app.Window) error {
 					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace + "|" + key.NameF1,
 				}.Add(gtx.Ops)
 
-				pointer.CursorPointer.Add(gtx.Ops)
-
 				if mouse.getLeftButton() {
 					deltaTime = time.Since(initTime)
 					mouse.setForce(deltaTime.Seconds() * 5)
