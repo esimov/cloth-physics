@@ -35,6 +35,7 @@ if [ "$1" == "package" ]; then
 	rm -rf packages/
 	package "Windows" "windows" "amd64"
 	package "Mac" "darwin" "amd64"
+	package "Linux" "linux" "amd64"
 	exit
 fi
 
