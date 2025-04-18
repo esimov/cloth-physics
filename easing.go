@@ -13,13 +13,13 @@ type Easing struct {
 	delta    time.Duration
 }
 
-// Progress calculates the time passed from the first invocation of the time.Now function.
+// Progress calculates the time passed from the first invocation of the time.Now.
 func (e *Easing) Progress() float64 {
 	return float64(e.delta) / float64(e.duration)
 }
 
-// Update updates the time passed from the initial invocation of the time.Now
-// function until the time set as duration is not reached.
+// Update updates the time passed from the initial invocation
+// of time.Now until the time set as duration is not reached.
 func (e *Easing) Update(gtx layout.Context, isActive bool) float64 {
 	delta := gtx.Now.Sub(e.initTime)
 	e.initTime = gtx.Now

@@ -73,10 +73,10 @@ func NewHud() *Hud {
 	}
 
 	sliders := []slider{
-		{title: "Drag force", min: 1.1, value: 2, max: 15},
+		{title: "Dragging force", min: 1.1, value: 2, max: 15},
 		{title: "Gravity", min: 100, value: 250, max: 500},
-		{title: "Elasticity", min: 10, value: 30, max: 50},
-		{title: "Easiness", min: 0.95, value: 0.98, max: 0.99},
+		{title: "Cloth friction", min: 10, value: 30, max: 50},
+		{title: "Cloth stiffness", min: 0.95, value: 0.98, max: 0.99},
 		{title: "Tear distance", min: 5, value: 15, max: 50},
 	}
 
@@ -88,9 +88,9 @@ func NewHud() *Hud {
 		{"F1": "Toggle the quick help panel"},
 		{"Space": "Redraw the cloth"},
 		{"Right click": "Tear the cloth at mouse position"},
-		{"Click & hold": "Increase cloth destruction"},
-		{"Scroll Up/Down": "Increase/decrease cloth destruction area"},
-		{"Ctrl+click": "Pin the cloth particle at mouse position"},
+		{"Click & hold": "Increase cloth tearing force"},
+		{"Scroll Up/Down": "Increase/decrease cloth tearing area"},
+		{"Ctrl+click": "Pin the particle at mouse position"},
 	}
 
 	for idx, cmd := range commands {
@@ -98,7 +98,7 @@ func NewHud() *Hud {
 	}
 
 	slide := &Easing{duration: 600 * time.Millisecond}
-	hover := &Easing{duration: 700 * time.Millisecond}
+	hover := &Easing{duration: 500 * time.Millisecond}
 
 	hud.debug = widget.Bool{}
 	hud.debug.Value = false
@@ -283,7 +283,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool)
 				}
 
 				progress := h.ctrlBtn.Update(gtx, isActive || h.activator.Hovered())
-				btnWidth := h.ctrlBtn.Animate(progress) * 1.5
+				btnWidth := h.ctrlBtn.Animate(progress) * 2.0
 
 				var path clip.Path
 
