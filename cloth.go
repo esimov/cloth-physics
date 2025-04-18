@@ -82,6 +82,7 @@ func (c *Cloth) Init(posX, posY int, hud *Hud) {
 func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float64) {
 	dragForce := float32(mouse.getForce() * 0.1)
 	clothColor := color.NRGBA{R: 0x55, A: 0xff}
+
 	// Convert the RGB color to HSL based on the applied force over the mouse focus area.
 	col := LinearFromSRGB(clothColor).HSLA().Lighten(dragForce).RGBA().SRGB()
 
@@ -98,8 +99,9 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float6
 	var path clip.Path
 	path.Begin(gtx.Ops)
 
-	// For performance reasons we draw the sticks as a single clip path instead of multiple clips paths.
-	// The performance improvement is considerable compared of drawing each clip path separately.
+	// For performance reasons we draw the sticks as a single clip path
+	// instead of multiple clips paths. The performance improvement is
+	// considerable compared to draw each clip path separately.
 	for _, c := range cloth.constraints {
 		if c.p1.isActive && c.p2.isActive {
 			a := f32.Pt(float32(c.p1.x), float32(c.p1.y))
@@ -113,25 +115,24 @@ func (cloth *Cloth) Update(gtx layout.Context, mouse *Mouse, hud *Hud, dt float6
 		Path: path.End(),
 	}.Op())
 
-	// Here we are drawing the mouse focus area in a separate clip path,
-	// because the color used for highlighting the selected area
+	// Draw the mouse focus area in a separate clip path.
+	// The color used for highlighting the selected area
 	// should be different than the cloth's default color.
+	path.Begin(gtx.Ops)
+
 	for _, c := range cloth.constraints {
 		if (c.p1.isActive && c.p1.highlighted) &&
 			(c.p2.isActive && c.p2.highlighted) {
 
-			c.color = color.NRGBA{R: col.R, A: col.A}
-
-			path.Begin(gtx.Ops)
 			a := f32.Pt(float32(c.p1.x), float32(c.p1.y))
 			b := f32.Pt(float32(c.p2.x), float32(c.p2.y))
 			addSegment(&path, a, b, lineWidth)
-
-			paint.FillShape(gtx.Ops, c.color, clip.Outline{
-				Path: path.End(),
-			}.Op())
 		}
 	}
+
+	paint.FillShape(gtx.Ops, color.NRGBA{R: col.R, A: col.A}, clip.Outline{
+		Path: path.End(),
+	}.Op())
 }
 
 // Reset resets the cloth to the initial state.

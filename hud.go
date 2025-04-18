@@ -79,6 +79,7 @@ func NewHud() *Hud {
 		{title: "Easiness", min: 0.95, value: 0.98, max: 0.99},
 		{title: "Tear distance", min: 5, value: 15, max: 50},
 	}
+
 	for idx, s := range sliders {
 		hud.addSlider(idx, s)
 	}
