@@ -19,7 +19,7 @@ jobs:
       GO111MODULE: "on"
     steps:
       - name: Cache-Go
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: |
             ~/go/pkg/mod              # Module download cache
@@ -39,6 +39,6 @@ jobs:
       - name: Download Go modules
         run: go mod download
 
-      - name: Build application        
+      - name: Build application
         run: |
           go build ./...
