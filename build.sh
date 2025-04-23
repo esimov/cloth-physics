@@ -2,10 +2,6 @@
 set -e
 
 VERSION="1.0.4"
-PROTECTED_MODE="no"
-USE_WINDOWS_GUI_MODE=""
-
-export GO15VENDOREXPERIMENT=1
 
 cd $(dirname "${BASH_SOURCE[0]}")
 OD="$(pwd)"
@@ -15,9 +11,15 @@ package() {
 	echo Packaging $1 Binary
 	bdir=cloth-physics-${VERSION}-$2-$3
 	rm -rf packages/$bdir && mkdir -p packages/$bdir
-	GOOS=$2 GOARCH=$3 ./build.sh
+
 	if [ "$2" == "windows" ]; then
 		USE_WINDOWS_GUI_MODE="-H=windowsgui"
+	else 
+		USE_WINDOWS_GUI_MODE=""
+	fi
+	
+	GOOS=$2 GOARCH=$3 ./build.sh
+	if [ "$2" == "windows" ]; then
 		mv cloth-physics packages/$bdir/cloth-physics.exe
 	else
 		mv cloth-physics packages/$bdir
@@ -63,4 +65,4 @@ if [ "$NOCOPY" != "1" ]; then
 fi
 
 # build and store objects into original directory.
-go build -ldflags "-X $USE_WINDOWS_GUI_MODE main.Version=$VERSION" -o "$OD/cloth-physics" main.go
+go build -ldflags "-X $USE_WINDOWS_GUI_MODE  main.Version=$VERSION" -o "$OD/cloth-physics" main.go
