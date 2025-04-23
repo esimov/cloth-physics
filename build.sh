@@ -17,8 +17,9 @@ package() {
 	else 
 		USE_WINDOWS_GUI_MODE=""
 	fi
-	
-	GOOS=$2 GOARCH=$3 ./build.sh
+
+	GOOS=$2 GOARCH=$3 go build -ldflags "$USE_WINDOWS_GUI_MODE -X main.Version=$VERSION" -o "$OD/cloth-physics" main.go
+
 	if [ "$2" == "windows" ]; then
 		mv cloth-physics packages/$bdir/cloth-physics.exe
 	else
@@ -64,5 +65,3 @@ if [ "$NOCOPY" != "1" ]; then
 	cd $WD
 fi
 
-# build and store objects into original directory.
-go build -ldflags "-X $USE_WINDOWS_GUI_MODE  main.Version=$VERSION" -o "$OD/cloth-physics" main.go
