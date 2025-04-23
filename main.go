@@ -22,20 +22,23 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 
+	"github.com/esimov/cloth-physics/gui"
+	"github.com/esimov/cloth-physics/params"
+	"github.com/esimov/cloth-physics/physics"
 	"github.com/loov/hrtime"
 )
 
 const Version = "v1.0.3"
 
 const (
-	hudTimeout = 2.5
-	delta      = 0.022
+	hudTimeout = params.HudTimeout
+	delta      = params.Delta
 
-	windowSizeX = 1280
-	windowSizeY = 820
+	windowSizeX = params.WindowSizeX
+	windowSizeY = params.WindowSizeY
 
-	defaultWindowWidth  = 1024
-	defaultWindowHeigth = 640
+	defaultWindowWidth  = params.DefaultWindowWidth
+	defaultWindowHeigth = params.DefaultWindowHeigth
 )
 
 var (
@@ -43,9 +46,9 @@ var (
 	windowHeight = defaultWindowHeigth
 
 	// App related variables
-	hud    *Hud
-	cloth  *Cloth
-	mouse  *Mouse
+	hud    *gui.Hud
+	cloth  *physics.Cloth
+	mouse  *physics.Mouse
 	clothW int
 	clothH int
 
@@ -74,24 +77,29 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	hud = NewHud()
-	mouse = &Mouse{maxScrollY: unit.Dp(maxFocusArea)}
-	mouse.setScrollY(defFocusArea)
+
+	hud = gui.NewHud()
+
+	mouse = &physics.Mouse{}
+	mouse.SetScrollY(params.DefaultFocusArea)
+	mouse.SetMaxScrollY(params.MaxFocusArea)
 
 	go func() {
 		w := app.NewWindow(
 			app.Title("Gio - 2D Cloth Simulation"),
 			app.Size(windowSizeX, windowSizeY),
 		)
-		if err := loop(w); err != nil {
+
+		if err := run(w); err != nil {
 			log.Fatal(err)
 		}
 		os.Exit(0)
 	}()
+
 	app.Main()
 }
 
-func loop(w *app.Window) error {
+func run(w *app.Window) error {
 	var keyTag struct{}
 
 	if profile != "" {
@@ -115,19 +123,19 @@ func loop(w *app.Window) error {
 			case system.FrameEvent:
 				start := hrtime.Now()
 				gtx := layout.NewContext(&ops, e)
-				hud.panelWidth = gtx.Dp(unit.Dp(windowSizeX))
-				hud.btnSize = gtx.Dp(unit.Dp(40))
-				hud.closeBtn = gtx.Dp(unit.Dp(30))
+				hud.PanelWidth = gtx.Dp(unit.Dp(windowSizeX))
+				hud.BtnSize = gtx.Dp(unit.Dp(40))
+				hud.CloseBtn = gtx.Dp(unit.Dp(30))
 
-				if hud.isActive {
-					if !hud.panelInit.IsZero() {
-						dt := time.Since(hud.panelInit).Seconds()
+				if hud.IsActive {
+					if !hud.InitPanel.IsZero() {
+						dt := time.Since(hud.InitPanel).Seconds()
 						if dt > hudTimeout {
-							hud.isActive = false
+							hud.IsActive = false
 						}
 					}
 				} else {
-					hud.panelInit = time.Time{}
+					hud.InitPanel = time.Time{}
 				}
 
 				if profile != "" {
@@ -144,7 +152,7 @@ func loop(w *app.Window) error {
 						}
 						return 2 * clothSpacing
 					}()
-					cloth = NewCloth(clothW, clothH, clothSpacing, defaultColor)
+					cloth = physics.NewCloth(clothW, clothH, clothSpacing, defaultColor)
 
 					width := gtx.Constraints.Max.X
 					height := gtx.Constraints.Max.Y
@@ -160,9 +168,9 @@ func loop(w *app.Window) error {
 					Keys: key.NameEscape + "|" + key.NameCtrl + "|" + key.NameAlt + "|" + key.NameSpace + "|" + key.NameF1,
 				}.Add(gtx.Ops)
 
-				if mouse.getLeftButton() {
+				if mouse.GetLeftButton() {
 					deltaTime = time.Since(initTime)
-					mouse.setForce(deltaTime.Seconds() * 5)
+					mouse.SetForce(deltaTime.Seconds() * 5)
 				}
 
 				for _, ev := range gtx.Queue.Events(&keyTag) {
@@ -176,30 +184,30 @@ func loop(w *app.Window) error {
 								startX := (width - clothW) / 2
 								startY := int(unit.Dp(height) * 0.2)
 
-								cloth.width = clothW
-								cloth.height = clothH
+								cloth.Width = clothW
+								cloth.Height = clothH
 
 								cloth.Reset(startX, startY, hud)
 							case key.NameF1:
-								hud.showHelpPanel = !hud.showHelpPanel
-								hud.isActive = false
+								hud.ShowHelpPanel = !hud.ShowHelpPanel
+								hud.IsActive = false
 							}
 						}
 						if e.Name == key.NameEscape {
-							hud.showHelpPanel = false
+							hud.ShowHelpPanel = false
 						}
 					}
 				}
 
 				// Reset the window offsets on resize.
-				hud.winOffsetX = 0
-				hud.winOffsetY = 0
+				hud.WinOffsetX = 0
+				hud.WinOffsetY = 0
 
 				if defaultWindowWidth != windowWidth {
-					hud.winOffsetX = float64(e.Size.X-windowWidth) * 0.5
+					hud.WinOffsetX = float64(e.Size.X-windowWidth) * 0.5
 				}
 				if defaultWindowHeigth != windowHeight {
-					hud.winOffsetY = float64(e.Size.Y-windowHeight) * 0.25
+					hud.WinOffsetY = float64(e.Size.Y-windowHeight) * 0.25
 				}
 
 				if e.Size.X != windowWidth || e.Size.Y != windowHeight {
@@ -208,14 +216,14 @@ func loop(w *app.Window) error {
 					windowWidth = e.Size.X
 					windowHeight = e.Size.Y
 
-					cloth.width = windowWidth
-					cloth.height = windowHeight
+					cloth.Width = windowWidth
+					cloth.Height = windowHeight
 
 					if e.Size.X < defaultWindowWidth {
-						hud.showHelpPanel = false
+						hud.ShowHelpPanel = false
 					}
 					if e.Size.Y < defaultWindowHeigth {
-						hud.showHelpPanel = false
+						hud.ShowHelpPanel = false
 					}
 				}
 				// Fill background
@@ -256,43 +264,43 @@ func loop(w *app.Window) error {
 								switch ev.Type {
 								case pointer.Scroll:
 									mouseScrollY += unit.Dp(ev.Scroll.Y)
-									if mouseScrollY < minFocusArea {
-										mouseScrollY = minFocusArea
-									} else if mouseScrollY > mouse.maxScrollY {
-										mouseScrollY = mouse.maxScrollY
+									if mouseScrollY < params.MinFocusArea {
+										mouseScrollY = params.MinFocusArea
+									} else if mouseScrollY > mouse.GetMaxScrollY() {
+										mouseScrollY = mouse.GetMaxScrollY()
 									}
-									mouse.setScrollY(mouseScrollY)
+									mouse.SetScrollY(mouseScrollY)
 								case pointer.Move:
-									pos := mouse.getCurrentPosition(ev)
-									mouse.updatePosition(float64(pos.X), float64(pos.Y))
+									pos := mouse.GetCurrentPosition(ev)
+									mouse.UpdatePosition(float64(pos.X), float64(pos.Y))
 								case pointer.Press:
 									if ev.Modifiers == key.ModCtrl {
-										mouse.setCtrlDown(true)
+										mouse.SetCtrlDown(true)
 									}
-									mouse.setLeftButton()
+									mouse.SetLeftButton()
 									initTime = time.Now()
-									hud.showHelpPanel = false
+									hud.ShowHelpPanel = false
 								case pointer.Release:
 									mouseDrag = false
 
-									mouse.resetForce()
-									mouse.releaseLeftButton()
-									mouse.releaseRightButton()
-									mouse.setDragging(mouseDrag)
-									mouse.setCtrlDown(false)
+									mouse.ResetForce()
+									mouse.ReleaseLeftButton()
+									mouse.ReleaseRightButton()
+									mouse.SetDragging(mouseDrag)
+									mouse.SetCtrlDown(false)
 								case pointer.Drag:
 									mouseDrag = true
 								}
 								switch ev.Buttons {
 								case pointer.ButtonPrimary:
-									mouse.setLeftButton()
-									pos := mouse.getCurrentPosition(ev)
-									mouse.updatePosition(float64(pos.X), float64(pos.Y))
-									mouse.setDragging(mouseDrag)
+									mouse.SetLeftButton()
+									pos := mouse.GetCurrentPosition(ev)
+									mouse.UpdatePosition(float64(pos.X), float64(pos.Y))
+									mouse.SetDragging(mouseDrag)
 								case pointer.ButtonSecondary:
-									mouse.setRightButton()
-									pos := mouse.getCurrentPosition(ev)
-									mouse.updatePosition(float64(pos.X), float64(pos.Y))
+									mouse.SetRightButton()
+									pos := mouse.GetCurrentPosition(ev)
+									mouse.UpdatePosition(float64(pos.X), float64(pos.Y))
 								}
 							}
 						}
@@ -301,7 +309,7 @@ func loop(w *app.Window) error {
 					}),
 
 					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
-						if hud.debug.Value {
+						if hud.Debug.Value {
 							layout.Stack{}.Layout(gtx,
 								layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 									op.Offset(image.Pt(10, 10)).Add(gtx.Ops)
@@ -314,25 +322,26 @@ func loop(w *app.Window) error {
 							)
 						}
 
-						if hud.isActive {
-							hud.showHelpPanel = false
-							for _, ev := range gtx.Queue.Events(&hud.hudTag) {
+						if hud.IsActive {
+							hud.ShowHelpPanel = false
+							for _, ev := range gtx.Queue.Events(&hud.Tag) {
 								switch ev := ev.(type) {
 								case pointer.Event:
 									switch ev.Type {
 									case pointer.Leave:
-										if hud.panelInit.IsZero() {
-											hud.panelInit = time.Now()
+										if hud.InitPanel.IsZero() {
+											hud.InitPanel = time.Now()
 										}
 									case pointer.Move:
-										hud.panelInit = time.Time{}
+										hud.InitPanel = time.Time{}
 									}
 								}
 							}
 						}
-						hud.DrawCtrlBtn(gtx, th, hud.isActive)
-						hud.ShowControlPanel(gtx, th, hud.isActive)
-						hud.ShowHelpDialog(gtx, th, hud.showHelpPanel)
+
+						hud.DrawCtrlBtn(gtx, th, hud.IsActive)
+						hud.ShowControlPanel(gtx, th, hud.IsActive)
+						hud.ShowHelpDialog(gtx, th, windowWidth, windowHeight, windowSizeX, hud.ShowHelpPanel)
 
 						return layout.Dimensions{}
 					}),

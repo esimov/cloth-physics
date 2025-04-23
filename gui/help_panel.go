@@ -1,4 +1,4 @@
-package main
+package gui
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 	"gioui.org/widget/material"
 )
 
-type help struct {
+type helpPanel struct {
 	fontType   font.Typeface
 	lineHeight int
 	h1FontSize int
@@ -25,7 +25,7 @@ type help struct {
 type command map[string]string
 
 // ShowHelpDialog activates a dialog panel whith a list of the available key shortcuts.
-func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bool) {
+func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, windowWidth, windowHeight, windowSizeX int, isActive bool) {
 	var (
 		panelWidth  int
 		panelHeight int
@@ -48,7 +48,7 @@ func (h *Hud) ShowHelpDialog(gtx layout.Context, th *material.Theme, isActive bo
 	centerY := windowHeight / 2
 
 	switch width := gtx.Dp(unit.Dp(windowWidth)); {
-	case width <= gtx.Dp(windowSizeX):
+	case width <= gtx.Dp(unit.Dp(windowSizeX)):
 		panelWidth = gtx.Dp(unit.Dp(windowWidth / 2))
 	default:
 		panelWidth = gtx.Dp(unit.Dp(windowWidth / 3))

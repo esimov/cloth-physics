@@ -1,8 +1,8 @@
-package main
+package utils
 
 import (
 	_ "embed"
-	"fmt"
+	"log"
 	"sync"
 
 	"gioui.org/font"
@@ -40,8 +40,9 @@ func Collection() []text.FontFace {
 func register(typeface string, fnt font.Font, ttf []byte) {
 	face, err := opentype.Parse(ttf)
 	if err != nil {
-		panic(fmt.Errorf("failed to parse font: %v", err))
+		log.Fatalf("failed to parse font: %v", err)
 	}
+
 	fnt.Typeface = font.Typeface(typeface)
 	collection = append(collection, font.FontFace{Font: fnt, Face: face})
 }
