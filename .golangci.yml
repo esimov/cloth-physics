@@ -1,0 +1,20 @@
+run:
+  issues-exit-code: 1
+linters:
+  disable-all: false
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+linters-settings:
+  govet:
+    shadow: true
+    enable:
+      - fieldalignment
+  fieldalignment:
+    suggest-new: true
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

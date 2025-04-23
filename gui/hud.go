@@ -38,8 +38,8 @@ const (
 )
 
 type Hud struct {
-	Sliders       map[HudSliderType]*slider
 	Tag           struct{}
+	Sliders       map[HudSliderType]*slider
 	InitPanel     time.Time
 	PanelWidth    int
 	PanelHeight   int

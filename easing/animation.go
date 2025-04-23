@@ -19,9 +19,9 @@ const (
 )
 
 type Animation struct {
-	Duration time.Duration
 	initTime time.Time
 	delta    time.Duration
+	Duration time.Duration
 }
 
 // Update updates the time passed from the initial invocation
