@@ -90,6 +90,9 @@ func main() {
 			app.Size(windowSizeX, windowSizeY),
 		)
 
+		// Center the window on the screen.
+		w.Perform(system.ActionCenter)
+
 		if err := run(w); err != nil {
 			log.Fatal(err)
 		}
