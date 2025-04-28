@@ -30,17 +30,7 @@ $ go build ./...
 $ cloth-physics
 ```
 
-If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/cloth-physics/tree/master/packages) page. For convenience if you wish to try the application on a mobile device the **`.apk`** file is also provided in the same packages page.
-
-#### Debugging:
-```bash
-$ cloth-physics -h
-
-  -debug-cpuprofile string
-        write CPU profile to this file
-  -debug-frame
-        debug the Gio frame rates
-```
+If you don't have Go installed on your machine you can run the prebuild binary files from the project [packages](https://github.com/esimov/cloth-physics/tree/master/packages) page.
 
 ## Supported key bindings:
 * <kbd>F1</kbd> - Show/hide the quick help panel
