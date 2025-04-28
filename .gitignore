@@ -11,4 +11,4 @@
 
 go.work
 go.sum
-!packages
+packages
