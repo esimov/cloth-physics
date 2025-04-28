@@ -1,7 +1,7 @@
 # cloth-physics
 [![Build](https://github.com/esimov/cloth-physics/actions/workflows/build.yml/badge.svg)](https://github.com/esimov/cloth-physics/actions/workflows/build.yml)
 [![License](https://img.shields.io/github/license/esimov/cloth-physics)](./LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.3-blue.svg)](https://github.com/esimov/cloth-physics/releases/tag/v1.0.3)
+[![Release](https://img.shields.io/badge/release-v1.0.4-blue.svg)](https://github.com/esimov/cloth-physics/releases/tag/v1.0.4)
 
 **cloth-physics** is a native desktop application for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration). It's written in [Gio](https://gioui.org), a GUI framework for [Go](https://golang.org/). 
 
