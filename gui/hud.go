@@ -18,8 +18,8 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/esimov/cloth-physics/consts"
 	"github.com/esimov/cloth-physics/easing"
-	"github.com/esimov/cloth-physics/params"
 )
 
 type (
@@ -254,14 +254,14 @@ func (h *Hud) ShowControlPanel(gtx layout.Context, th *material.Theme, isActive 
 				}),
 				layout.Rigid(func(gtx C) D {
 					btnTheme := material.NewTheme()
-					btnTheme.Palette.ContrastBg = params.HudDefaultColor
+					btnTheme.Palette.ContrastBg = consts.HudDefaultColor
 					return layout.UniformInset(unit.Dp(10)).Layout(gtx, material.Button(btnTheme, &h.reset, "Reset").Layout)
 				}),
 			)
 		}),
 
 		layout.Flexed(1, func(gtx C) D {
-			w := material.Body1(th, fmt.Sprintf("2D Cloth Simulation %s\nCopyright © 2023, Endre Simo", params.Version))
+			w := material.Body1(th, fmt.Sprintf("2D Cloth Simulation %s\nCopyright © 2023, Endre Simo", consts.Version))
 			w.Alignment = text.End
 			w.Color = th.ContrastBg
 			w.TextSize = 12
@@ -349,7 +349,7 @@ func (h *Hud) DrawCtrlBtn(gtx layout.Context, th *material.Theme, isActive bool)
 				pointer.CursorPointer.Add(gtx.Ops)
 				h.activator.Add(gtx.Ops)
 
-				paint.ColorOp{Color: params.HudDefaultColor}.Add(gtx.Ops)
+				paint.ColorOp{Color: consts.HudDefaultColor}.Add(gtx.Ops)
 				paint.PaintOp{}.Add(gtx.Ops)
 
 				return layout.Dimensions{}

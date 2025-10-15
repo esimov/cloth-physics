@@ -8,8 +8,8 @@ import (
 	"gioui.org/layout"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
+	"github.com/esimov/cloth-physics/consts"
 	"github.com/esimov/cloth-physics/gui"
-	"github.com/esimov/cloth-physics/params"
 )
 
 // particle holds the basic components of the particle system.
@@ -125,16 +125,16 @@ func (p *particle) update(gtx layout.Context, mouse *Mouse, hud *gui.Hud, dt flo
 	}
 
 	// Pin up the particle if the mouse is pressed combined with the CTRL key.
-	if mouse.GetCtrlDown() && dist < params.ClothPinDist {
+	if mouse.GetCtrlDown() && dist < consts.ClothPinDist {
 		p.pinX = true
 	}
 
 	// Modify the mouse focus area size on scrolling.
 	focusArea := mouse.GetScrollY()
-	if focusArea > params.MaxFocusArea {
-		focusArea = params.MaxFocusArea
-	} else if focusArea < params.MinFocusArea {
-		focusArea = params.MinFocusArea
+	if focusArea > consts.MaxFocusArea {
+		focusArea = consts.MaxFocusArea
+	} else if focusArea < consts.MinFocusArea {
+		focusArea = consts.MinFocusArea
 	}
 
 	if dist < float64(focusArea) {

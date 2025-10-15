@@ -1,4 +1,4 @@
-package params
+package consts
 
 import "image/color"
 

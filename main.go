@@ -22,8 +22,8 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 
+	"github.com/esimov/cloth-physics/consts"
 	"github.com/esimov/cloth-physics/gui"
-	"github.com/esimov/cloth-physics/params"
 	"github.com/esimov/cloth-physics/physics"
 	"github.com/loov/hrtime"
 )
@@ -31,14 +31,14 @@ import (
 const Version = "v1.0.3"
 
 const (
-	hudTimeout = params.HudTimeout
-	delta      = params.Delta
+	hudTimeout = consts.HudTimeout
+	delta      = consts.Delta
 
-	windowSizeX = params.WindowSizeX
-	windowSizeY = params.WindowSizeY
+	windowSizeX = consts.WindowSizeX
+	windowSizeY = consts.WindowSizeY
 
-	defaultWindowWidth  = params.DefaultWindowWidth
-	defaultWindowHeigth = params.DefaultWindowHeigth
+	defaultWindowWidth  = consts.DefaultWindowWidth
+	defaultWindowHeigth = consts.DefaultWindowHeigth
 )
 
 var (
@@ -81,8 +81,8 @@ func main() {
 	hud = gui.NewHud()
 
 	mouse = &physics.Mouse{}
-	mouse.SetScrollY(params.DefaultFocusArea)
-	mouse.SetMaxScrollY(params.MaxFocusArea)
+	mouse.SetScrollY(consts.DefaultFocusArea)
+	mouse.SetMaxScrollY(consts.MaxFocusArea)
 
 	go func() {
 		w := app.NewWindow(
@@ -267,8 +267,8 @@ func run(w *app.Window) error {
 								switch ev.Type {
 								case pointer.Scroll:
 									mouseScrollY += unit.Dp(ev.Scroll.Y)
-									if mouseScrollY < params.MinFocusArea {
-										mouseScrollY = params.MinFocusArea
+									if mouseScrollY < consts.MinFocusArea {
+										mouseScrollY = consts.MinFocusArea
 									} else if mouseScrollY > mouse.GetMaxScrollY() {
 										mouseScrollY = mouse.GetMaxScrollY()
 									}
