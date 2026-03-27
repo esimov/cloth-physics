@@ -5,7 +5,7 @@
 
 **cloth-physics** is a native desktop application for 2D cloth physics simulation implementing [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration). It's written in [Gio](https://gioui.org), a GUI framework for [Go](https://golang.org/). 
 
-**Main features:**
+### **Main features:**
 - [x] Possibility to tear up the cloth by applying a mouse pressure on the cloth structure. You can increase the mouse dragging force by pressing and holding the left mouse button. The mouse focus area will change its color depending on the applied force.
 - [x] Possibility to make up a hole in the cloth structure by pressing the right mouse button.
 - [x] You can change the mouse cloth interaction area by using the scroll button.
