@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [~1.18, ~1.19]
-        os: [ubuntu-latest]
+        go-version: [~1.24, ~1.25]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
       GO111MODULE: "on"

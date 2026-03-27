@@ -50,7 +50,7 @@ func (a *Animation) Update(gtx layout.Context, isActive bool) float64 {
 	return float64(a.delta) / float64(a.Duration)
 }
 
-// Animate applies the In-Out-Back easing formula to a specific event.
+// Animate applies the easing formula to a specific event.
 func (e *Animation) Animate(formula EasingFormula, t float64) float64 {
 	switch formula {
 	case EaseInOut:
